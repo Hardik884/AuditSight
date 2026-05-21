@@ -81,3 +81,18 @@ export interface AuditResponse {
   optimizationOpportunities: string[];
   governanceInsights: string[];
 }
+
+export interface ApiSuccess<T> {
+  ok: true;
+  data: T;
+}
+
+export interface ApiError {
+  ok: false;
+  error: {
+    message: string;
+    details?: string[];
+  };
+}
+
+export type ApiResponse<T> = ApiSuccess<T> | ApiError;
