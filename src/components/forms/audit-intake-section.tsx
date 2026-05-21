@@ -4,28 +4,36 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type {
+  AuditRequest,
+  AuditResponse,
+  AuditGoal,
+  Challenge,
+  TeamSize,
+  ToolName,
+} from "@/types/audit";
 
-const teamSizes = ["1-25", "26-100", "101-500", "500+"] as const;
-const aiTools = [
+const teamSizes: TeamSize[] = ["1-25", "26-100", "101-500", "500+"];
+const aiTools: ToolName[] = [
   "ChatGPT",
   "Claude",
   "Cursor",
   "GitHub Copilot",
   "Gemini",
   "Perplexity",
-] as const;
-const challenges = [
+];
+const challenges: Challenge[] = [
   "Unclear ROI",
   "Overlapping subscriptions",
   "Spend volatility",
   "Model quality drift",
-] as const;
-const goals = [
+];
+const goals: AuditGoal[] = [
   "Reduce monthly spend",
   "Improve usage governance",
   "Consolidate vendors",
   "Optimize model routing",
-] as const;
+];
 
 const progressSteps = [
   "Analyzing AI stack...",
@@ -33,87 +41,33 @@ const progressSteps = [
   "Generating optimization insights...",
 ] as const;
 
-const baseRecommendations = {
-  "Unclear ROI": [
-    "Map AI usage to revenue-driving workflows",
-    "Benchmark cost per output across teams",
-  ],
-  "Overlapping subscriptions": [
-    "Consolidate duplicate seats across vendors",
-    "Retire underused copilots in back-office teams",
-  ],
-  "Spend volatility": [
-    "Add spend guardrails on high-variance prompts",
-    "Shift bursty traffic to reserved capacity",
-  ],
-  "Model quality drift": [
-    "Tighten evaluation gates for critical workflows",
-    "Align routing with quality thresholds",
-  ],
-} as const;
-
-const goalPriorities = {
-  "Reduce monthly spend": "Savings prioritized",
-  "Improve usage governance": "Governance prioritized",
-  "Consolidate vendors": "Vendor consolidation prioritized",
-  "Optimize model routing": "Routing prioritized",
-} as const;
-
 type Status = "idle" | "loading" | "complete";
 
 export function AuditIntakeSection() {
-  const [selectedSize, setSelectedSize] = useState<string>(teamSizes[1]);
-  const [selectedTools, setSelectedTools] = useState<string[]>([aiTools[0]]);
+  const [selectedSize, setSelectedSize] = useState<TeamSize>(teamSizes[1]);
+  const [selectedTools, setSelectedTools] = useState<ToolName[]>([aiTools[0]]);
   const [monthlySpend, setMonthlySpend] = useState<string>("$25,000");
-  const [selectedChallenge, setSelectedChallenge] = useState<string>(
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge>(
     challenges[1]
   );
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([goals[0]]);
+  const [selectedGoals, setSelectedGoals] = useState<AuditGoal[]>([goals[0]]);
   const [status, setStatus] = useState<Status>("idle");
   const [progressIndex, setProgressIndex] = useState<number>(0);
+  const [progressDone, setProgressDone] = useState<boolean>(false);
+  const [auditResponse, setAuditResponse] = useState<AuditResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const spendValue = useMemo(() => {
     const numeric = Number(monthlySpend.replace(/[^0-9.]/g, ""));
     return Number.isFinite(numeric) ? numeric : 0;
   }, [monthlySpend]);
 
-  const sizeFactor = useMemo(() => {
-    if (selectedSize === "1-25") return 0.12;
-    if (selectedSize === "26-100") return 0.16;
-    if (selectedSize === "101-500") return 0.2;
-    return 0.24;
-  }, [selectedSize]);
-
-  const toolFactor = useMemo(() => 1 + selectedTools.length * 0.06, [selectedTools.length]);
-
-  const estimatedSavings = useMemo(() => {
-    const base = spendValue * sizeFactor * toolFactor;
-    return Math.max(base, 2400);
-  }, [sizeFactor, spendValue, toolFactor]);
-
-  const riskCoverage = useMemo(() => {
-    if (selectedChallenge === "Overlapping subscriptions") return "High";
-    if (selectedChallenge === "Spend volatility") return "Moderate";
-    return "Stable";
-  }, [selectedChallenge]);
-
-  const confidenceLabel = useMemo(() => {
-    if (selectedTools.length >= 4 && spendValue > 50000) return "High";
-    if (selectedTools.length >= 2) return "Medium";
-    return "Focused";
-  }, [selectedTools.length, spendValue]);
-
-  const recommendations = useMemo(() => {
-    const challengeRecs = baseRecommendations[selectedChallenge] ?? [];
-    const toolRecommendations = selectedTools.length >= 4
-      ? ["Rationalize overlapping copilots in adjacent teams"]
-      : ["Standardize usage policies for core tools"];
-    const goalRecommendation = selectedGoals[0]
-      ? [goalPriorities[selectedGoals[0]]]
-      : ["Savings prioritized"];
-    const total = Math.min(5, 2 + selectedTools.length);
-    return [...challengeRecs, ...toolRecommendations, ...goalRecommendation].slice(0, total);
-  }, [selectedChallenge, selectedGoals, selectedTools.length]);
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
 
   const progressPercent = useMemo(() => {
     const stepCount = progressSteps.length;
@@ -126,15 +80,17 @@ export function AuditIntakeSection() {
     if (status !== "loading") return;
 
     setProgressIndex(0);
+    setProgressDone(false);
+    const stepDuration = 1200;
     const interval = setInterval(() => {
       setProgressIndex((current) =>
         Math.min(current + 1, progressSteps.length - 1)
       );
-    }, 1200);
+    }, stepDuration);
 
     const timeout = setTimeout(() => {
-      setStatus("complete");
-    }, progressSteps.length * 1200 + 400);
+      setProgressDone(true);
+    }, progressSteps.length * stepDuration + 300);
 
     return () => {
       clearInterval(interval);
@@ -142,10 +98,16 @@ export function AuditIntakeSection() {
     };
   }, [status]);
 
-  const toggleSelection = (
-    value: string,
-    values: string[],
-    setValues: (next: string[]) => void
+  useEffect(() => {
+    if (status !== "loading") return;
+    if (!progressDone || !auditResponse) return;
+    setStatus("complete");
+  }, [auditResponse, progressDone, status]);
+
+  const toggleSelection = <T extends string>(
+    value: T,
+    values: T[],
+    setValues: (next: T[]) => void
   ) => {
     if (values.includes(value)) {
       setValues(values.filter((item) => item !== value));
@@ -157,11 +119,59 @@ export function AuditIntakeSection() {
   const resetFlow = () => {
     setStatus("idle");
     setProgressIndex(0);
+    setProgressDone(false);
+    setAuditResponse(null);
+    setErrorMessage(null);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (status === "loading") return;
+    if (selectedTools.length === 0) {
+      setErrorMessage("Select at least one AI tool to continue.");
+      return;
+    }
+    if (selectedGoals.length === 0) {
+      setErrorMessage("Select at least one audit goal to continue.");
+      return;
+    }
+    if (spendValue <= 0) {
+      setErrorMessage("Enter a valid monthly spend amount.");
+      return;
+    }
+
+    setErrorMessage(null);
+    setAuditResponse(null);
     setStatus("loading");
+
+    const payload: AuditRequest = {
+      teamSize: selectedSize,
+      selectedTools,
+      monthlySpend: spendValue,
+      biggestChallenge: selectedChallenge,
+      auditGoals: selectedGoals,
+    };
+
+    try {
+      const response = await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.ok) {
+        setStatus("idle");
+        setErrorMessage(result?.errors?.[0] || "Unable to generate audit.");
+        return;
+      }
+
+      setAuditResponse(result.data as AuditResponse);
+    } catch (error) {
+      console.error("Audit request failed", error);
+      setStatus("idle");
+      setErrorMessage("Unable to generate audit. Please try again.");
+    }
   };
 
   return (
@@ -349,6 +359,12 @@ export function AuditIntakeSection() {
                 </div>
               </div>
 
+              {errorMessage ? (
+                <div className="mt-5 rounded-2xl border border-amber-200/70 bg-amber-50/70 p-4 text-sm text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                  {errorMessage}
+                </div>
+              ) : null}
+
               <div
                 className={`mt-6 rounded-2xl border border-border/60 bg-slate-50/70 p-4 text-sm text-slate-700 transition duration-300 dark:bg-slate-900/50 dark:text-slate-200 ${
                   status === "complete"
@@ -375,19 +391,23 @@ export function AuditIntakeSection() {
                 <div className="flex items-center justify-between text-sm">
                   <span>Estimated savings</span>
                   <span className="font-semibold text-emerald-300">
-                    ${Math.round(estimatedSavings / 1000).toFixed(1)}k
+                    {auditResponse
+                      ? formatCurrency(auditResponse.metrics.estimatedSavings)
+                      : "—"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span>Risk coverage</span>
                   <span className="font-semibold text-amber-200">
-                    {riskCoverage}
+                    {auditResponse ? auditResponse.metrics.riskLevel : "—"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span>Optimization confidence</span>
+                  <span>Optimization score</span>
                   <span className="font-semibold text-indigo-200">
-                    {confidenceLabel}
+                    {auditResponse
+                      ? `${auditResponse.metrics.optimizationScore}`
+                      : "—"}
                   </span>
                 </div>
               </div>
@@ -412,15 +432,26 @@ export function AuditIntakeSection() {
                 Recommended priorities
               </p>
               <div className="mt-4 space-y-3">
-                {recommendations.map((item) => (
+                {auditResponse?.recommendations.map((item) => (
                   <div
-                    key={item}
-                    className="flex items-center justify-between rounded-2xl border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-slate-700 shadow-sm dark:bg-slate-900/50 dark:text-slate-200"
+                    key={item.title}
+                    className="rounded-2xl border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-slate-700 shadow-sm dark:bg-slate-900/50 dark:text-slate-200"
                   >
-                    <span>{item}</span>
-                    <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-200">
-                      Priority
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-slate-900 dark:text-slate-100">
+                        {item.title}
+                      </span>
+                      <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-200">
+                        {item.confidence} confidence
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-300">
+                      {item.description}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-300">
+                      <span>Impact: {formatCurrency(item.estimatedSavingsImpact)}</span>
+                      <span>Severity: {item.severity}</span>
+                    </div>
                   </div>
                 ))}
               </div>
