@@ -1,4 +1,8 @@
 import { HeroSection } from "@/components/hero-section";
+import { AuditInsightsSection } from "@/components/marketing/audit-insights-section";
+import { CtaSection } from "@/components/marketing/cta-section";
+import { FeatureSection } from "@/components/marketing/feature-section";
+import { HowItWorksSection } from "@/components/marketing/how-it-works-section";
 import { Navbar } from "@/components/navbar";
 
 export default function Home() {
@@ -6,6 +10,10 @@ export default function Home() {
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
       <HeroSection />
+      <FeatureSection />
+      <AuditInsightsSection />
+      <HowItWorksSection />
+      <CtaSection />
     </main>
   );
 }

@@ -10,8 +10,8 @@ const navLinks = [
 
 export function Navbar() {
   return (
-    <header className="w-full">
-      <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-3">
         <Link
           href="/"
           className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground"
