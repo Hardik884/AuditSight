@@ -1,4 +1,6 @@
 import type { AuditResponse } from "@/types/audit";
+import { Button } from "@/components/ui/button";
+import { CONSULTATION_THRESHOLD } from "@/constants/audit-config";
 
 interface AuditResultDetailsProps {
   status: "idle" | "loading" | "complete";
@@ -15,6 +17,9 @@ export function AuditResultDetails({
 }: AuditResultDetailsProps) {
   const hasResults = status === "complete" && auditResponse;
   const showDetails = hasResults && showFullReport === true;
+  const showConsultationCta =
+    hasResults &&
+    (auditResponse?.metrics.annualSavings ?? 0) >= CONSULTATION_THRESHOLD;
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,6 +68,32 @@ export function AuditResultDetails({
           {auditResponse ? (
             <div className="rounded-2xl border border-border/60 bg-white/90 p-4 text-sm text-slate-600 shadow-sm dark:bg-slate-900/50 dark:text-slate-300">
               {auditResponse.auditSummary.narrative}
+            </div>
+          ) : null}
+
+          {showConsultationCta ? (
+            <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50 via-white to-slate-50 p-4 shadow-sm dark:border-emerald-500/30 dark:from-emerald-500/10 dark:via-slate-950 dark:to-slate-900/70">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">
+                    High optimization opportunity detected
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    Your organization could benefit from a dedicated AI spend optimization
+                    review. Potential annual savings exceed strategic thresholds.
+                  </p>
+                </div>
+                <Button asChild size="lg" className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-500">
+                  <a
+                    href="https://credex.rocks"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Book a Credex Consultation"
+                  >
+                    Book a Credex Consultation
+                  </a>
+                </Button>
+              </div>
             </div>
           ) : null}
         </div>

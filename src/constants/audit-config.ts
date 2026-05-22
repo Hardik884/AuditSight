@@ -46,6 +46,7 @@ export const SIZE_FACTORS: Record<TeamSize, number> = {
 
 export const TOOL_FACTOR_INCREMENT = 0.06;
 export const MIN_ESTIMATED_SAVINGS = 2500;
+export const CONSULTATION_THRESHOLD = 10000;
 
 export const RISK_THRESHOLDS = {
   critical: 9,
