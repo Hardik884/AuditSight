@@ -1,17 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { AuditGoal, Challenge, TeamSize, ToolName } from "@/types/audit";
+import type {
+  AuditGoal,
+  Challenge,
+  PrimaryUseCase,
+  TeamSize,
+  ToolName,
+} from "@/types/audit";
 
 interface AuditFormProps {
   teamSizes: readonly TeamSize[];
   aiTools: readonly ToolName[];
   challenges: readonly Challenge[];
   goals: readonly AuditGoal[];
+  primaryUseCases: readonly PrimaryUseCase[];
   selectedSize: TeamSize;
   selectedTools: ToolName[];
   monthlySpend: string;
   selectedChallenge: Challenge;
   selectedGoals: AuditGoal[];
+  selectedPrimaryUseCase: PrimaryUseCase;
   isSubmitting: boolean;
   errorMessage: string | null;
   onSelectSize: (size: TeamSize) => void;
@@ -19,6 +27,7 @@ interface AuditFormProps {
   onSpendChange: (value: string) => void;
   onSelectChallenge: (challenge: Challenge) => void;
   onToggleGoal: (goal: AuditGoal) => void;
+  onSelectPrimaryUseCase: (useCase: PrimaryUseCase) => void;
   onSubmit: () => void;
 }
 
@@ -27,11 +36,13 @@ export function AuditForm({
   aiTools,
   challenges,
   goals,
+  primaryUseCases,
   selectedSize,
   selectedTools,
   monthlySpend,
   selectedChallenge,
   selectedGoals,
+  selectedPrimaryUseCase,
   isSubmitting,
   errorMessage,
   onSelectSize,
@@ -39,6 +50,7 @@ export function AuditForm({
   onSpendChange,
   onSelectChallenge,
   onToggleGoal,
+  onSelectPrimaryUseCase,
   onSubmit,
 }: AuditFormProps) {
   return (
@@ -119,6 +131,28 @@ export function AuditForm({
                 }`}
               >
                 {challenge}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            Primary use case
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {primaryUseCases.map((useCase) => (
+              <button
+                key={useCase}
+                type="button"
+                onClick={() => onSelectPrimaryUseCase(useCase)}
+                className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                  selectedPrimaryUseCase === useCase
+                    ? "border-slate-400/60 bg-slate-900 text-white shadow-sm dark:border-slate-600 dark:bg-white dark:text-slate-900"
+                    : "border-border/60 bg-background/80 text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:text-slate-200"
+                }`}
+              >
+                {useCase}
               </button>
             ))}
           </div>

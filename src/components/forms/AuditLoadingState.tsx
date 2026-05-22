@@ -4,6 +4,7 @@ interface AuditLoadingStateProps {
   progressIndex: number;
   progressPercent: number;
   errorMessage: string | null;
+  successMessage: string;
   onReset: () => void;
 }
 
@@ -13,6 +14,7 @@ export function AuditLoadingState({
   progressIndex,
   progressPercent,
   errorMessage,
+  successMessage,
   onReset,
 }: AuditLoadingStateProps) {
   return (
@@ -85,7 +87,7 @@ export function AuditLoadingState({
             : "pointer-events-none opacity-0 translate-y-2"
         }`}
       >
-        Audit ready. A sample report and optimization plan are prepared.
+        {successMessage}
         <button
           type="button"
           onClick={onReset}

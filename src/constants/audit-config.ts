@@ -22,6 +22,16 @@ export const AUDIT_GOALS = [
   "Optimize model routing",
 ] as const;
 
+export const PRIMARY_USE_CASES = [
+  "Engineering",
+  "Marketing",
+  "Research",
+  "Customer Support",
+  "Operations",
+  "Sales",
+  "Content Creation",
+] as const;
+
 export const AUDIT_LIMITS = {
   maxMonthlySpend: 10_000_000,
   minMonthlySpend: 1,

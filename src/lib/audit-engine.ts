@@ -22,6 +22,7 @@ export const generateAudit = (
   const riskScore = computeRiskScore(request);
   const riskLevel = computeRiskLevel(riskScore);
   const estimatedSavings = computeEstimatedSavings(request);
+  const annualSavings = estimatedSavings * 12;
   const optimizationScore = computeOptimizationScore(request);
   const recommendations = buildRecommendations(request);
   const potentialSavingsPercent = computePotentialSavingsPercent(
@@ -60,6 +61,7 @@ export const generateAudit = (
     generatedAt: new Date().toISOString(),
     metrics: {
       estimatedSavings,
+      annualSavings,
       optimizationScore,
       riskLevel,
       potentialSavingsPercent,

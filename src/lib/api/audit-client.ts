@@ -1,8 +1,8 @@
-import type { ApiResponse, AuditRequest, AuditResponse } from "@/types/audit";
+import type { ApiResponse, AuditRequest, AuditResult } from "@/types/audit";
 
 export const requestAudit = async (
   payload: AuditRequest
-): Promise<ApiResponse<AuditResponse>> => {
+): Promise<ApiResponse<AuditResult>> => {
   try {
     const response = await fetch("/api/audit", {
       method: "POST",
@@ -10,7 +10,7 @@ export const requestAudit = async (
       body: JSON.stringify(payload),
     });
 
-    const result = (await response.json()) as ApiResponse<AuditResponse>;
+    const result = (await response.json()) as ApiResponse<AuditResult>;
     if (!response.ok) {
       return {
         ok: false,

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { generateAudit } from "@/lib/audit-engine";
+import { saveAudit } from "@/lib/audit-storage";
 import { auditRequestSchema } from "@/lib/validation/audit-schema";
-import type { ApiResponse, AuditResponse } from "@/types/audit";
+import type { ApiResponse, AuditResult } from "@/types/audit";
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       const errors = parsed.error.issues.map((issue) => issue.message);
-      const response: ApiResponse<AuditResponse> = {
+      const response: ApiResponse<AuditResult> = {
         ok: false,
         error: {
           message: "Invalid audit request.",
@@ -21,15 +22,20 @@ export async function POST(request: Request) {
     }
 
     const auditResponse = generateAudit(parsed.data, crypto.randomUUID());
-    const response: ApiResponse<AuditResponse> = {
+    const { auditId, createdAt } = await saveAudit(parsed.data, auditResponse);
+    const response: ApiResponse<AuditResult> = {
       ok: true,
-      data: auditResponse,
+      data: {
+        ...auditResponse,
+        auditId,
+        generatedAt: createdAt,
+      },
     };
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
     console.error("Audit API error", error);
-    const response: ApiResponse<AuditResponse> = {
+    const response: ApiResponse<AuditResult> = {
       ok: false,
       error: { message: "Internal server error." },
     };

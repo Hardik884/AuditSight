@@ -27,6 +27,15 @@ export type AuditGoal =
   | "Consolidate vendors"
   | "Optimize model routing";
 
+export type PrimaryUseCase =
+  | "Engineering"
+  | "Marketing"
+  | "Research"
+  | "Customer Support"
+  | "Operations"
+  | "Sales"
+  | "Content Creation";
+
 export type RiskLevel = "Low" | "Moderate" | "High" | "Critical";
 
 export type ConfidenceLevel = "Low" | "Medium" | "High";
@@ -41,6 +50,7 @@ export interface AuditRequest {
   monthlySpend: number;
   biggestChallenge: Challenge;
   auditGoals: AuditGoal[];
+  primaryUseCase: PrimaryUseCase;
 }
 
 export interface Recommendation {
@@ -54,6 +64,7 @@ export interface Recommendation {
 
 export interface AuditMetrics {
   estimatedSavings: number;
+  annualSavings: number;
   optimizationScore: number;
   riskLevel: RiskLevel;
   potentialSavingsPercent: number;
@@ -80,6 +91,32 @@ export interface AuditResponse {
   usageInsights: UsageInsights;
   optimizationOpportunities: string[];
   governanceInsights: string[];
+}
+
+export interface AuditResult extends AuditResponse {
+  auditId: string;
+}
+
+export interface AuditRow {
+  id?: string;
+  created_at?: string;
+  team_size: TeamSize;
+  primary_use_case: PrimaryUseCase;
+  tools: ToolName[];
+  monthly_spend: number;
+  challenges: Challenge;
+  goals: AuditGoal[];
+  estimated_savings: number;
+  annual_savings: number;
+  optimization_score: number;
+  risk_level: RiskLevel;
+  potential_savings_percent: number;
+  recommendations: Recommendation[];
+  governance_insights: string[];
+  usage_insights: UsageInsights;
+  audit_summary: AuditSummary;
+  optimization_opportunities: string[];
+  request_id?: string;
 }
 
 export interface ApiSuccess<T> {

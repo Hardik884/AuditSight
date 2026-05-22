@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import type {
   AuditGoal,
   AuditRequest,
-  AuditResponse,
+  AuditResult,
   Challenge,
+  PrimaryUseCase,
   TeamSize,
   ToolName,
 } from "@/types/audit";
@@ -17,6 +19,7 @@ import { requestAudit } from "@/lib/api/audit-client";
 import {
   AUDIT_GOALS,
   CHALLENGES,
+  PRIMARY_USE_CASES,
   TEAM_SIZES,
   TOOL_NAMES,
 } from "@/constants/audit-config";
@@ -41,12 +44,18 @@ export function AuditIntakeSection() {
   const [selectedGoals, setSelectedGoals] = useState<AuditGoal[]>([
     AUDIT_GOALS[0],
   ]);
+  const [primaryUseCase, setPrimaryUseCase] = useState<PrimaryUseCase>(
+    PRIMARY_USE_CASES[0]
+  );
   const [status, setStatus] = useState<Status>("idle");
   const [progressIndex, setProgressIndex] = useState<number>(0);
   const [progressDone, setProgressDone] = useState<boolean>(false);
-  const [auditResponse, setAuditResponse] = useState<AuditResponse | null>(null);
+  const [auditResponse, setAuditResponse] = useState<AuditResult | null>(null);
+  const [auditId, setAuditId] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const router = useRouter();
 
   const spendValue = useMemo(() => {
     const numeric = Number(monthlySpend.replace(/[^0-9.]/g, ""));
@@ -93,7 +102,13 @@ export function AuditIntakeSection() {
     if (status !== "loading") return;
     if (!progressDone || !auditResponse) return;
     setStatus("complete");
-  }, [auditResponse, progressDone, status]);
+    if (!auditId || redirecting) return;
+    setRedirecting(true);
+    const timeout = setTimeout(() => {
+      router.push(`/audit/${auditId}`);
+    }, 700);
+    return () => clearTimeout(timeout);
+  }, [auditId, auditResponse, progressDone, redirecting, router, status]);
 
   const toggleSelection = <T extends string>(
     value: T,
@@ -112,6 +127,8 @@ export function AuditIntakeSection() {
     setProgressIndex(0);
     setProgressDone(false);
     setAuditResponse(null);
+    setAuditId(null);
+    setRedirecting(false);
     setFormError(null);
     setSubmitError(null);
   };
@@ -124,6 +141,10 @@ export function AuditIntakeSection() {
     }
     if (selectedGoals.length === 0) {
       setFormError("Select at least one audit goal to continue.");
+      return;
+    }
+    if (!primaryUseCase) {
+      setFormError("Select a primary use case to continue.");
       return;
     }
     if (spendValue <= 0) {
@@ -142,6 +163,7 @@ export function AuditIntakeSection() {
       monthlySpend: spendValue,
       biggestChallenge: selectedChallenge,
       auditGoals: selectedGoals,
+      primaryUseCase,
     };
 
     const result = await requestAudit(payload);
@@ -156,6 +178,7 @@ export function AuditIntakeSection() {
     }
 
     setAuditResponse(result.data);
+    setAuditId(result.data.auditId);
   };
 
   return (
@@ -183,11 +206,13 @@ export function AuditIntakeSection() {
             aiTools={TOOL_NAMES}
             challenges={CHALLENGES}
             goals={AUDIT_GOALS}
+            primaryUseCases={PRIMARY_USE_CASES}
             selectedSize={selectedSize}
             selectedTools={selectedTools}
             monthlySpend={monthlySpend}
             selectedChallenge={selectedChallenge}
             selectedGoals={selectedGoals}
+            selectedPrimaryUseCase={primaryUseCase}
             isSubmitting={status === "loading"}
             errorMessage={formError}
             onSelectSize={setSelectedSize}
@@ -199,6 +224,7 @@ export function AuditIntakeSection() {
             onToggleGoal={(goal) =>
               toggleSelection(goal, selectedGoals, setSelectedGoals)
             }
+            onSelectPrimaryUseCase={setPrimaryUseCase}
             onSubmit={handleGenerate}
           />
 
@@ -210,6 +236,11 @@ export function AuditIntakeSection() {
               progressPercent={progressPercent}
               errorMessage={submitError}
               onReset={resetFlow}
+              successMessage={
+                redirecting
+                  ? "Audit generated successfully. Redirecting to your report..."
+                  : "Audit generated successfully. Preparing your report..."
+              }
             />
             <AuditResultDetails
               status={status}

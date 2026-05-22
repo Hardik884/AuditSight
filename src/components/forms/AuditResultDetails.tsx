@@ -26,12 +26,20 @@ export function AuditResultDetails({
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-4">
             <div className="rounded-2xl border border-border/60 bg-white/90 px-4 py-3 shadow-sm dark:bg-slate-900/60">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Estimated savings</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Monthly savings</p>
               <p className="mt-2 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                 {auditResponse
                   ? formatCurrency(auditResponse.metrics.estimatedSavings)
+                  : "—"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-white/90 px-4 py-3 shadow-sm dark:bg-slate-900/60">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Annual savings</p>
+              <p className="mt-2 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                {auditResponse
+                  ? formatCurrency(auditResponse.metrics.annualSavings)
                   : "—"}
               </p>
             </div>

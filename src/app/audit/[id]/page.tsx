@@ -1,0 +1,51 @@
+import { notFound } from "next/navigation";
+import { Navbar } from "@/components/navbar";
+import { AuditResultDetails } from "@/components/forms/AuditResultDetails";
+import { getAuditById } from "@/lib/audit-storage";
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+
+interface AuditPageProps {
+  params: { id: string };
+}
+
+export default async function AuditResultPage({ params }: AuditPageProps) {
+  const audit = await getAuditById(params.id);
+
+  if (!audit) {
+    notFound();
+  }
+
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <Navbar />
+      <section className="border-b border-border/40 bg-slate-50/70 py-10 dark:bg-slate-950/40">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+            Audit report
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
+            Audit results
+          </h1>
+          <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+            Generated on {new Date(audit.generatedAt).toLocaleDateString()}.
+          </p>
+        </div>
+      </section>
+      <section className="py-12">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6">
+          <AuditResultDetails
+            status="complete"
+            auditResponse={audit}
+            formatCurrency={formatCurrency}
+          />
+        </div>
+      </section>
+    </main>
+  );
+}

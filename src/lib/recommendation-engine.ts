@@ -4,6 +4,7 @@ import {
   GOAL_RECOMMENDATIONS,
   TOOL_BASED_RECOMMENDATIONS,
   TOOL_CATEGORY_MAP,
+  USE_CASE_RECOMMENDATIONS,
 } from "@/lib/audit-rules";
 import { RECOMMENDATION_LIMITS } from "@/constants/audit-config";
 import { computeConfidence, computeImpactMultiplier } from "@/lib/scoring-engine";
@@ -35,6 +36,7 @@ export const buildRecommendations = (request: AuditRequest) => {
 
   const baseRecs = [
     ...CHALLENGE_RECOMMENDATIONS[request.biggestChallenge],
+    USE_CASE_RECOMMENDATIONS[request.primaryUseCase],
     ...request.auditGoals.map((goal) => GOAL_RECOMMENDATIONS[goal]),
   ];
 

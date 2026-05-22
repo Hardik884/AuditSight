@@ -1,6 +1,7 @@
 import type {
   AuditGoal,
   Challenge,
+  PrimaryUseCase,
   Recommendation,
   ToolCategory,
   ToolName,
@@ -151,6 +152,65 @@ export const TOOL_BASED_RECOMMENDATIONS: Recommendation[] = [
     difficulty: "Low",
   },
 ];
+
+export const USE_CASE_RECOMMENDATIONS: Record<PrimaryUseCase, Recommendation> = {
+  Engineering: {
+    title: "Developer workflow optimization",
+    description: "Consolidate copilots and enforce IDE seat utilization checks.",
+    confidence: "High",
+    estimatedSavingsImpact: 4800,
+    severity: "Medium",
+    difficulty: "Low",
+  },
+  Marketing: {
+    title: "Content workflow consolidation",
+    description: "Standardize campaign generation and reuse approved templates.",
+    confidence: "Medium",
+    estimatedSavingsImpact: 3200,
+    severity: "Low",
+    difficulty: "Low",
+  },
+  Research: {
+    title: "Research tooling rationalization",
+    description: "Route exploratory queries to cost-efficient search models.",
+    confidence: "High",
+    estimatedSavingsImpact: 3600,
+    severity: "Medium",
+    difficulty: "Low",
+  },
+  "Customer Support": {
+    title: "Support deflection tuning",
+    description: "Reduce agent handoffs by refining AI response quality gates.",
+    confidence: "Medium",
+    estimatedSavingsImpact: 2900,
+    severity: "Medium",
+    difficulty: "Medium",
+  },
+  Operations: {
+    title: "Process automation alignment",
+    description: "Automate repetitive workflows with policy-backed copilots.",
+    confidence: "Medium",
+    estimatedSavingsImpact: 3100,
+    severity: "Low",
+    difficulty: "Medium",
+  },
+  Sales: {
+    title: "Revenue workflow efficiency",
+    description: "Optimize outreach and CRM enrichment with shared prompts.",
+    confidence: "Medium",
+    estimatedSavingsImpact: 2700,
+    severity: "Low",
+    difficulty: "Low",
+  },
+  "Content Creation": {
+    title: "Creative pipeline standardization",
+    description: "Centralize brand-safe prompts and consolidate tool spend.",
+    confidence: "Medium",
+    estimatedSavingsImpact: 3000,
+    severity: "Low",
+    difficulty: "Low",
+  },
+};
 
 export const GOVERNANCE_INSIGHT_TEMPLATES = [
   "Policy coverage on 62% of active teams",
