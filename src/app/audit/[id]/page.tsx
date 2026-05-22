@@ -1,14 +1,7 @@
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/navbar";
-import { AuditResultDetails } from "@/components/forms/AuditResultDetails";
+import { AuditReportPanel } from "@/components/forms/AuditReportPanel";
 import { getAuditById } from "@/lib/audit-storage";
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
 
 interface AuditPageProps {
   params: { id: string };
@@ -39,11 +32,7 @@ export default async function AuditResultPage({ params }: AuditPageProps) {
       </section>
       <section className="py-12">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6">
-          <AuditResultDetails
-            status="complete"
-            auditResponse={audit}
-            formatCurrency={formatCurrency}
-          />
+          <AuditReportPanel audit={audit} />
         </div>
       </section>
     </main>

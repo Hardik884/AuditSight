@@ -3,10 +3,13 @@ import type {
   AuditResponse,
   AuditResult,
   AuditRow,
+  EmailCaptureRequest,
+  EmailCaptureRow,
 } from "@/types/audit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const AUDIT_TABLE = "audits";
+const EMAIL_CAPTURE_TABLE = "email_captures";
 
 const toRow = (request: AuditRequest, response: AuditResponse): AuditRow => ({
   team_size: request.teamSize,
@@ -25,12 +28,11 @@ const toRow = (request: AuditRequest, response: AuditResponse): AuditRow => ({
   usage_insights: response.usageInsights,
   audit_summary: response.auditSummary,
   optimization_opportunities: response.optimizationOpportunities,
-  request_id: response.requestId,
+  request_id: response.auditId,
 });
 
 const fromRow = (row: AuditRow & { id: string; created_at: string }): AuditResult => ({
   auditId: row.id,
-  requestId: row.request_id ?? row.id,
   generatedAt: row.created_at,
   metrics: {
     estimatedSavings: row.estimated_savings,
@@ -86,4 +88,26 @@ export const getAuditById = async (auditId: string) => {
   }
 
   return fromRow(data as AuditRow & { id: string; created_at: string });
+};
+
+export const saveEmailCapture = async (payload: EmailCaptureRequest) => {
+  const supabase = createSupabaseServerClient();
+  const insertPayload: EmailCaptureRow = {
+    audit_id: payload.auditId,
+    email: payload.email,
+    captured_from: payload.capturedFrom,
+  };
+
+  const { error } = await supabase.from(EMAIL_CAPTURE_TABLE).insert(insertPayload);
+
+  if (error) {
+    console.error("Supabase email capture insert failed", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+      error,
+    });
+    throw new Error("Failed to capture email.");
+  }
 };

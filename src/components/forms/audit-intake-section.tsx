@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import type {
   AuditGoal,
   AuditRequest,
-  AuditResult,
   Challenge,
   PrimaryUseCase,
   TeamSize,
@@ -14,7 +13,6 @@ import type {
 } from "@/types/audit";
 import { AuditForm } from "@/components/forms/AuditForm";
 import { AuditLoadingState } from "@/components/forms/AuditLoadingState";
-import { AuditResultDetails } from "@/components/forms/AuditResultDetails";
 import { requestAudit } from "@/lib/api/audit-client";
 import {
   AUDIT_GOALS,
@@ -50,9 +48,7 @@ export function AuditIntakeSection() {
   const [status, setStatus] = useState<Status>("idle");
   const [progressIndex, setProgressIndex] = useState<number>(0);
   const [progressDone, setProgressDone] = useState<boolean>(false);
-  const [auditResponse, setAuditResponse] = useState<AuditResult | null>(null);
   const [auditId, setAuditId] = useState<string | null>(null);
-  const [redirecting, setRedirecting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const router = useRouter();
@@ -69,12 +65,6 @@ export function AuditIntakeSection() {
     return Math.round(((progressIndex + 1) / stepCount) * 100);
   }, [progressIndex, status]);
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(value);
 
   useEffect(() => {
     if (status !== "loading") return;
@@ -100,15 +90,14 @@ export function AuditIntakeSection() {
 
   useEffect(() => {
     if (status !== "loading") return;
-    if (!progressDone || !auditResponse) return;
+    if (!progressDone || !auditId) return;
     setStatus("complete");
-    if (!auditId || redirecting) return;
-    setRedirecting(true);
-    const timeout = setTimeout(() => {
-      router.push(`/audit/${auditId}`);
-    }, 700);
-    return () => clearTimeout(timeout);
-  }, [auditId, auditResponse, progressDone, redirecting, router, status]);
+  }, [auditId, progressDone, status]);
+
+  useEffect(() => {
+    if (!auditId || !progressDone) return;
+    router.push(`/audit/${auditId}`);
+  }, [auditId, progressDone, router]);
 
   const toggleSelection = <T extends string>(
     value: T,
@@ -126,9 +115,7 @@ export function AuditIntakeSection() {
     setStatus("idle");
     setProgressIndex(0);
     setProgressDone(false);
-    setAuditResponse(null);
     setAuditId(null);
-    setRedirecting(false);
     setFormError(null);
     setSubmitError(null);
   };
@@ -154,7 +141,6 @@ export function AuditIntakeSection() {
 
     setFormError(null);
     setSubmitError(null);
-    setAuditResponse(null);
     setStatus("loading");
 
     const payload: AuditRequest = {
@@ -176,8 +162,8 @@ export function AuditIntakeSection() {
       );
       return;
     }
-
-    setAuditResponse(result.data);
+    console.log(result);
+    console.log(result.data.auditId);
     setAuditId(result.data.auditId);
   };
 
@@ -236,16 +222,7 @@ export function AuditIntakeSection() {
               progressPercent={progressPercent}
               errorMessage={submitError}
               onReset={resetFlow}
-              successMessage={
-                redirecting
-                  ? "Audit generated successfully. Redirecting to your report..."
-                  : "Audit generated successfully. Preparing your report..."
-              }
-            />
-            <AuditResultDetails
-              status={status}
-              auditResponse={auditResponse}
-              formatCurrency={formatCurrency}
+              successMessage="Audit generated successfully. Preparing your report..."
             />
           </div>
         </div>

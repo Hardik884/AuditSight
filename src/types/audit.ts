@@ -44,6 +44,8 @@ export type SeverityLevel = "Low" | "Medium" | "High";
 
 export type DifficultyLevel = "Low" | "Medium" | "High";
 
+export type EmailCaptureSource = "report-unlock";
+
 export interface AuditRequest {
   teamSize: TeamSize;
   selectedTools: ToolName[];
@@ -83,7 +85,7 @@ export interface UsageInsights {
 }
 
 export interface AuditResponse {
-  requestId: string;
+  auditId: string;
   generatedAt: string;
   metrics: AuditMetrics;
   recommendations: Recommendation[];
@@ -93,9 +95,7 @@ export interface AuditResponse {
   governanceInsights: string[];
 }
 
-export interface AuditResult extends AuditResponse {
-  auditId: string;
-}
+export interface AuditResult extends AuditResponse {}
 
 export interface AuditRow {
   id?: string;
@@ -117,6 +117,18 @@ export interface AuditRow {
   audit_summary: AuditSummary;
   optimization_opportunities: string[];
   request_id?: string;
+}
+
+export interface EmailCaptureRequest {
+  auditId: string;
+  email: string;
+  capturedFrom: EmailCaptureSource;
+}
+
+export interface EmailCaptureRow {
+  audit_id: string;
+  email: string;
+  captured_from: EmailCaptureSource;
 }
 
 export interface ApiSuccess<T> {

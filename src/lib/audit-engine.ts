@@ -17,7 +17,7 @@ import { buildRecommendations } from "@/lib/recommendation-engine";
 
 export const generateAudit = (
   request: AuditRequest,
-  requestId: string
+  auditId: string
 ): AuditResponse => {
   const riskScore = computeRiskScore(request);
   const riskLevel = computeRiskLevel(riskScore);
@@ -57,7 +57,7 @@ export const generateAudit = (
   );
 
   return {
-    requestId,
+    auditId,
     generatedAt: new Date().toISOString(),
     metrics: {
       estimatedSavings,

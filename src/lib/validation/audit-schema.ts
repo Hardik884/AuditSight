@@ -21,4 +21,11 @@ export const auditRequestSchema = z.object({
   primaryUseCase: z.enum(PRIMARY_USE_CASES),
 });
 
+export const emailCaptureSchema = z.object({
+  auditId: z.string().min(1),
+  email: z.string().email(),
+  capturedFrom: z.literal("report-unlock"),
+});
+
 export type AuditRequestInput = z.infer<typeof auditRequestSchema>;
+export type EmailCaptureInput = z.infer<typeof emailCaptureSchema>;
