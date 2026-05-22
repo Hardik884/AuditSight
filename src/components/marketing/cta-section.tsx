@@ -22,7 +22,7 @@ export function CtaSection() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="bg-white text-slate-900 hover:bg-slate-100">
-                <Link href="#generate-audit">Generate Free Audit</Link>
+                <Link href="/audit">Generate Free Audit</Link>
               </Button>
               <Button
                 asChild
@@ -30,7 +30,7 @@ export function CtaSection() {
                 size="lg"
                 className="border-white/30 text-white hover:bg-white/10"
               >
-                <Link href="#example-audit">View Sample Report</Link>
+                <Link href="/#example-audit">View Sample Report</Link>
               </Button>
             </div>
           </div>

@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Example Audit", href: "#example-audit" },
+  { label: "Features", href: "/#features" },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Example Audit", href: "/#example-audit" },
   { label: "GitHub", href: "https://github.com/Hardik884/AuditSight" },
 ];
 
@@ -37,8 +37,8 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button size="sm" className="shadow-sm">
-            Generate Free Audit
+          <Button asChild size="sm" className="shadow-sm">
+            <Link href="/audit">Generate Free Audit</Link>
           </Button>
         </div>
       </nav>

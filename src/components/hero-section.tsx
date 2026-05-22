@@ -26,7 +26,7 @@ export function HeroSection() {
 
             <div className="flex flex-col items-center gap-3 sm:flex-row lg:items-start">
               <Button asChild size="lg" className="shadow-sm">
-                <Link href="#generate-audit">Generate Free Audit</Link>
+                <Link href="/audit">Generate Free Audit</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href="#example-audit">View Sample Report</Link>

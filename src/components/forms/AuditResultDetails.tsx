@@ -15,42 +15,46 @@ export function AuditResultDetails({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-3xl border border-border/60 bg-slate-900 p-6 text-white shadow-[0_24px_70px_-50px_rgba(15,23,42,0.8)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
-          Audit summary
-        </p>
-        <div className="mt-4 space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <span>Estimated savings</span>
-            <span className="font-semibold text-emerald-300">
-              {auditResponse
-                ? formatCurrency(auditResponse.metrics.estimatedSavings)
-                : "—"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span>Risk coverage</span>
-            <span className="font-semibold text-amber-200">
-              {auditResponse ? auditResponse.metrics.riskLevel : "—"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span>Optimization score</span>
-            <span className="font-semibold text-indigo-200">
-              {auditResponse ? auditResponse.metrics.optimizationScore : "—"}
-            </span>
-          </div>
-        </div>
-        {auditResponse ? (
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
-            <p className="font-semibold text-white">
-              {auditResponse.auditSummary.headline}
+      <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-white via-slate-50 to-slate-100/70 p-6 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.35)] dark:from-slate-950 dark:via-slate-950/80 dark:to-slate-900/70">
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+              Audit summary
             </p>
-            <p className="mt-2 text-xs text-slate-300">
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+              {auditResponse ? auditResponse.auditSummary.headline : "—"}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border/60 bg-white/90 px-4 py-3 shadow-sm dark:bg-slate-900/60">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Estimated savings</p>
+              <p className="mt-2 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                {auditResponse
+                  ? formatCurrency(auditResponse.metrics.estimatedSavings)
+                  : "—"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-white/90 px-4 py-3 shadow-sm dark:bg-slate-900/60">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Risk level</p>
+              <p className="mt-2 text-lg font-semibold text-amber-600 dark:text-amber-400">
+                {auditResponse ? auditResponse.metrics.riskLevel : "—"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-white/90 px-4 py-3 shadow-sm dark:bg-slate-900/60">
+              <p className="text-xs text-slate-500 dark:text-slate-400">Optimization score</p>
+              <p className="mt-2 text-lg font-semibold text-indigo-600 dark:text-indigo-300">
+                {auditResponse ? auditResponse.metrics.optimizationScore : "—"}
+              </p>
+            </div>
+          </div>
+
+          {auditResponse ? (
+            <div className="rounded-2xl border border-border/60 bg-white/90 p-4 text-sm text-slate-600 shadow-sm dark:bg-slate-900/50 dark:text-slate-300">
               {auditResponse.auditSummary.narrative}
-            </p>
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div

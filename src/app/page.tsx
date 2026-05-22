@@ -3,7 +3,6 @@ import { AuditInsightsSection } from "@/components/marketing/audit-insights-sect
 import { CtaSection } from "@/components/marketing/cta-section";
 import { FeatureSection } from "@/components/marketing/feature-section";
 import { HowItWorksSection } from "@/components/marketing/how-it-works-section";
-import { AuditIntakeSection } from "@/components/forms/audit-intake-section";
 import { Navbar } from "@/components/navbar";
 
 export default function Home() {
@@ -14,7 +13,6 @@ export default function Home() {
       <FeatureSection />
       <AuditInsightsSection />
       <HowItWorksSection />
-      <AuditIntakeSection />
       <CtaSection />
     </main>
   );
