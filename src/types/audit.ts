@@ -34,6 +34,10 @@ export interface ToolBreakdown {
   recommendedAction: string;
   projectedSavings: number;
   rationale: string;
+  /** Confidence level derived from the triggered rule's signal strength */
+  confidence?: ConfidenceLevel;
+  /** Internal rule identifier for traceability */
+  ruleId?: string;
 }
 
 export interface Recommendation {
@@ -79,7 +83,8 @@ export interface AuditResponse {
   governanceInsights: string[];
 }
 
-export interface AuditResult extends AuditResponse {}
+// AuditResult is an alias for AuditResponse (used in API response typing)
+export type AuditResult = AuditResponse;
 
 export interface AuditRow {
   id?: string;

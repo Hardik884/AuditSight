@@ -4,11 +4,12 @@ import { AuditReportPanel } from "@/components/forms/AuditReportPanel";
 import { getAuditById } from "@/lib/audit-storage";
 
 interface AuditPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AuditResultPage({ params }: AuditPageProps) {
-  const audit = await getAuditById(params.id);
+  const { id } = await params;
+  const audit = await getAuditById(id);
 
   if (!audit) {
     notFound();

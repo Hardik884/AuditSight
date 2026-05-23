@@ -1,11 +1,35 @@
-import type { AuditRequest, AuditResponse } from "@/types/audit";
+/**
+ * AuditSight — Audit Engine
+ *
+ * Orchestrates the full audit pipeline:
+ *  1. Run per-tool rules against each tool entry
+ *  2. Run cross-tool rules across the full tool set
+ *  3. Assemble tool breakdown with defensible savings estimates
+ *  4. Build recommendations (de-duplicated, prioritized)
+ *  5. Compute metrics and produce an honest executive summary
+ *
+ * Savings honesty rules:
+ *  - Every per-tool saving derives from a rule with a concrete price basis
+ *  - Cross-tool savings are conservative (≤50% of secondary spend)
+ *  - Total projected savings < $100/mo → summary says stack is cost-efficient
+ *  - We never claim savings we cannot explain
+ */
+
+import type { AuditRequest, AuditResponse, ConfidenceLevel, ToolBreakdown, ToolSelection } from "@/types/audit";
 import {
   GOVERNANCE_INSIGHT_TEMPLATES,
   OPTIMIZATION_OPPORTUNITY_TEMPLATES,
   HIGH_TIER_PLANS,
-  LLM_TOOLS,
-  getDowngradePlan,
+  ruleZeroSeatSpend,
+  ruleSeatsExceedTeam,
+  ruleEnterpriseTinyTeam,
+  ruleTeamPlanSolo,
+  ruleHighSpendPerSeat,
+  ruleCopilotOverlap,
+  ruleLlmPremiumDuplicate,
+  ruleApiVsSeatSameVendor,
 } from "@/lib/audit-rules";
+import type { CrossToolRuleResult, RuleResult } from "@/lib/audit-rules";
 import {
   computeOptimizationScore,
   computePotentialSavingsPercent,
@@ -14,107 +38,256 @@ import {
   computeSeatUtilization,
   computeTotalMonthlySpend,
   computeTotalSeats,
+  computeConfidenceFromSignals,
 } from "@/lib/scoring-engine";
 import { buildRecommendations } from "@/lib/recommendation-engine";
 import { getToolCategory } from "@/constants/pricing";
+
+// ─── Minimum savings threshold for the executive summary optimism ─────────────
+
+/** Below this monthly total, the summary says the stack is cost-efficient */
+const EXECUTIVE_SAVINGS_FLOOR = 100;
+
+// ─── Per-Tool Rule Runner ────────────────────────────────────────────────────
+
+/**
+ * Runs all per-tool rules in priority order.
+ * Returns the first triggered rule result (or the last if none trigger).
+ * Rules are evaluated in order from most to least certain.
+ */
+const runPerToolRules = (
+  entry: ToolSelection,
+  teamSize: number
+): RuleResult => {
+  const rules = [
+    ruleZeroSeatSpend(entry),
+    ruleSeatsExceedTeam(entry, teamSize),
+    ruleEnterpriseTinyTeam(entry, teamSize),
+    ruleTeamPlanSolo(entry),
+    ruleHighSpendPerSeat(entry),
+  ];
+
+  const triggered = rules.find((r) => r.triggered);
+  if (triggered) return triggered;
+
+  // No rule triggered — tool appears cost-efficient
+  return {
+    ruleId: "COST_EFFICIENT",
+    triggered: false,
+    savings: 0,
+    confidence: "High",
+    action: "Keep current plan",
+    rationale:
+      "Spend and seat allocation appear aligned with the reported team size and plan tier. No optimization opportunities identified for this tool.",
+  };
+};
+
+// ─── Cross-Tool Rule Runner ──────────────────────────────────────────────────
+
+const runCrossToolRules = (
+  tools: ToolSelection[]
+): CrossToolRuleResult[] => {
+  const results: CrossToolRuleResult[] = [];
+
+  const copilotResult = ruleCopilotOverlap(tools);
+  if (copilotResult.triggered) results.push(copilotResult);
+
+  const llmResult = ruleLlmPremiumDuplicate(tools);
+  if (llmResult.triggered) results.push(llmResult);
+
+  const apiResults = ruleApiVsSeatSameVendor(tools);
+  results.push(...apiResults.filter((r) => r.triggered));
+
+  return results;
+};
+
+// ─── Governance Insight Selector ─────────────────────────────────────────────
+
+const selectGovernanceInsights = (
+  toolCount: number,
+  crossToolResults: CrossToolRuleResult[],
+  hasApiTools: boolean
+): string[] => {
+  const insights: string[] = [];
+
+  if (toolCount >= 2) {
+    insights.push(GOVERNANCE_INSIGHT_TEMPLATES[1]); // spend fragmented
+  }
+  if (crossToolResults.length > 0) {
+    insights.push(GOVERNANCE_INSIGHT_TEMPLATES[0]); // no centralized owner
+  }
+  if (hasApiTools) {
+    insights.push(GOVERNANCE_INSIGHT_TEMPLATES[3]); // API spend guardrails
+  }
+  if (toolCount >= 4 && insights.length < 3) {
+    insights.push(GOVERNANCE_INSIGHT_TEMPLATES[2]); // seat allocation policies
+  }
+
+  return insights.slice(0, 3);
+};
+
+// ─── Optimization Opportunity Selector ────────────────────────────────────────
+
+const selectOptimizationOpportunities = (
+  crossToolResults: CrossToolRuleResult[],
+  hasApiTools: boolean,
+  hasSeatsAboveTeam: boolean
+): string[] => {
+  const opportunities: string[] = [];
+
+  if (crossToolResults.some((r) => r.ruleId === "COPILOT_OVERLAP")) {
+    opportunities.push(OPTIMIZATION_OPPORTUNITY_TEMPLATES[0]);
+  }
+  if (hasSeatsAboveTeam) {
+    opportunities.push(OPTIMIZATION_OPPORTUNITY_TEMPLATES[1]);
+  }
+  if (hasApiTools) {
+    opportunities.push(OPTIMIZATION_OPPORTUNITY_TEMPLATES[2]);
+  }
+  opportunities.push(OPTIMIZATION_OPPORTUNITY_TEMPLATES[3]); // always recommend quarterly review
+
+  if (opportunities.length < 3) {
+    opportunities.push(OPTIMIZATION_OPPORTUNITY_TEMPLATES[4]);
+  }
+
+  return opportunities.slice(0, 4);
+};
+
+// ─── Executive Summary Builder ────────────────────────────────────────────────
+
+const buildAuditSummary = (
+  estimatedSavings: number,
+  potentialSavingsPercent: number,
+  recommendationCount: number,
+  totalMonthlySpend: number
+): { headline: string; narrative: string } => {
+  const isOptimized = estimatedSavings < EXECUTIVE_SAVINGS_FLOOR;
+
+  if (totalMonthlySpend === 0) {
+    return {
+      headline: "Audit complete — no spend data provided",
+      narrative:
+        "Enter monthly spend values for each tool to enable savings analysis. The audit engine requires reported spend to compute defensible optimization estimates.",
+    };
+  }
+
+  if (isOptimized) {
+    return {
+      headline: "Current AI spend configuration appears cost-efficient",
+      narrative:
+        "Based on reported spend, seat allocations, and plan tiers, no material optimization opportunities were identified. Continue monitoring vendor pricing, headcount changes, and new tool additions on a quarterly basis to maintain spend efficiency.",
+    };
+  }
+
+  const savingsText =
+    potentialSavingsPercent >= 5
+      ? `approximately ${potentialSavingsPercent}% of current monthly spend`
+      : `an estimated $${estimatedSavings.toLocaleString()}/month`;
+
+  return {
+    headline: `${recommendationCount} optimization ${recommendationCount === 1 ? "opportunity" : "opportunities"} identified`,
+    narrative: `The audit identified potential savings of ${savingsText} based on plan-tier alignment, seat utilization, and tool overlap analysis. Estimates are conservative and derived from published vendor pricing. Actual savings will depend on implementation timing and vendor negotiation.`,
+  };
+};
+
+// ─── Main Audit Generator ────────────────────────────────────────────────────
 
 export const generateAudit = (
   request: AuditRequest,
   auditId: string
 ): AuditResponse => {
-  const totalMonthlySpend = computeTotalMonthlySpend(request.tools);
-  const totalSeats = computeTotalSeats(request.tools);
-  const seatUtilizationPercent = computeSeatUtilization(request.teamSize, totalSeats);
-  const highTierCount = request.tools.filter((tool) =>
+  const { tools, teamSize } = request;
+
+  // ── Metrics ────────────────────────────────────────────────────────────────
+  const totalMonthlySpend = computeTotalMonthlySpend(tools);
+  const totalSeats = computeTotalSeats(tools);
+  const seatUtilizationPercent = computeSeatUtilization(teamSize, totalSeats);
+
+  const highTierCount = tools.filter((tool) =>
     (HIGH_TIER_PLANS[tool.tool] ?? []).includes(tool.plan)
   ).length;
 
-  const riskScore = computeRiskScore(
-    request.teamSize,
-    request.tools.length,
-    totalMonthlySpend
-  );
+  const riskScore = computeRiskScore(teamSize, tools.length, totalMonthlySpend);
   const riskLevel = computeRiskLevel(riskScore);
-  const optimizationScore = computeOptimizationScore(
-    request.tools.length,
-    highTierCount,
-    seatUtilizationPercent
+
+  // ── Per-Tool Analysis ───────────────────────────────────────────────────────
+  const perToolResults: RuleResult[] = tools.map((entry) =>
+    runPerToolRules(entry, teamSize)
   );
 
-  const toolBreakdown = request.tools.map((toolEntry) => {
-    const highTierPlans = HIGH_TIER_PLANS[toolEntry.tool] ?? [];
-    const isHighTier = highTierPlans.includes(toolEntry.plan);
-    const downgradePlan = getDowngradePlan(toolEntry.tool, toolEntry.plan);
-    const hasSpend = toolEntry.monthlySpend > 0;
+  // ── Cross-Tool Analysis ────────────────────────────────────────────────────
+  const crossToolResults = runCrossToolRules(tools);
 
-    if (toolEntry.seatCount === 0 && hasSpend) {
-      return {
-        ...toolEntry,
-        recommendedAction: "Reconcile unused seats",
-        projectedSavings: Math.round(toolEntry.monthlySpend * 0.15),
-        rationale: "Reported spend exists without active seats. Review billing owners and remove idle plans.",
-      };
-    }
+  // ── Confidence ─────────────────────────────────────────────────────────────
+  const confidence: ConfidenceLevel = computeConfidenceFromSignals(
+    perToolResults,
+    crossToolResults
+  );
 
-    if (toolEntry.seatCount > request.teamSize) {
-      return {
-        ...toolEntry,
-        recommendedAction: "Reduce seat count",
-        projectedSavings: Math.round(toolEntry.monthlySpend * 0.1),
-        rationale: "Seat count exceeds reported team size. Align licenses with active users.",
-      };
-    }
-
-    if (isHighTier && toolEntry.seatCount <= Math.max(3, Math.round(request.teamSize * 0.1))) {
-      return {
-        ...toolEntry,
-        recommendedAction: downgradePlan
-          ? `Downgrade to ${downgradePlan}`
-          : "Review plan tier",
-        projectedSavings: Math.round(toolEntry.monthlySpend * 0.2),
-        rationale: "High-tier plan coverage is oversized for the current seat count.",
-      };
-    }
-
+  // ── Tool Breakdown Assembly ─────────────────────────────────────────────────
+  const toolBreakdown: ToolBreakdown[] = tools.map((entry, i) => {
+    const result = perToolResults[i]!;
     return {
-      ...toolEntry,
-      recommendedAction: "Keep current plan",
-      projectedSavings: 0,
-      rationale: "Spend and seat allocation appear aligned for this tool.",
+      ...entry,
+      recommendedAction: result.action,
+      projectedSavings: result.savings,
+      rationale: result.rationale,
+      confidence,
+      ruleId: result.ruleId,
     };
   });
 
-  const llmTools = toolBreakdown.filter((tool) => LLM_TOOLS.includes(tool.tool));
-  if (llmTools.length >= 2) {
-    const primary = [...llmTools].sort((a, b) => b.monthlySpend - a.monthlySpend)[0];
-    toolBreakdown.forEach((tool) => {
-      if (tool.tool === primary.tool) return;
-      if (tool.projectedSavings > 0) return;
-      if (!LLM_TOOLS.includes(tool.tool)) return;
-      tool.projectedSavings = Math.round(tool.monthlySpend * 0.1);
-      tool.recommendedAction = `Consolidate with ${primary.tool}`;
-      tool.rationale = "Multiple LLM subscriptions overlap in capability. Consolidate where possible.";
-    });
-  }
+  // ── Aggregate Savings ───────────────────────────────────────────────────────
+  // Cross-tool savings are capped at their own rule estimates to avoid double-counting
+  const crossToolSavings = crossToolResults
+    .filter((r) => r.triggered)
+    .reduce((sum, r) => sum + r.savings, 0);
 
-  const estimatedSavings = toolBreakdown.reduce(
-    (sum, tool) => sum + tool.projectedSavings,
-    0
+  // De-duplicate: if a tool is covered by a cross-tool rule, don't add per-tool savings for it
+  const crossToolCoveredTools = new Set(
+    crossToolResults
+      .filter((r) => r.triggered && r.savings > 0)
+      .flatMap((r) => r.affectedTools as string[])
   );
+  const dedupedPerToolSavings = toolBreakdown.reduce((sum, t) => {
+    if (crossToolCoveredTools.has(t.tool) && crossToolSavings > 0) return sum;
+    return sum + t.projectedSavings;
+  }, 0);
+
+  const estimatedSavings = dedupedPerToolSavings + crossToolSavings;
   const annualSavings = estimatedSavings * 12;
   const potentialSavingsPercent = computePotentialSavingsPercent(
     estimatedSavings,
     totalMonthlySpend
   );
 
-  const recommendations = buildRecommendations(request, toolBreakdown);
+  // ── Optimization Score ────────────────────────────────────────────────────
+  const triggeredRuleCount =
+    perToolResults.filter((r) => r.triggered).length +
+    crossToolResults.filter((r) => r.triggered).length;
+
+  const optimizationScore = computeOptimizationScore(
+    tools.length,
+    highTierCount,
+    seatUtilizationPercent,
+    triggeredRuleCount
+  );
+
+  // ── Recommendations ────────────────────────────────────────────────────────
+  const recommendations = buildRecommendations(
+    request,
+    toolBreakdown,
+    crossToolResults
+  );
+
+  // ── Usage Insights ─────────────────────────────────────────────────────────
   const toolCategories = Array.from(
-    new Set(request.tools.map((tool) => getToolCategory(tool.tool)))
+    new Set(tools.map((tool) => getToolCategory(tool.tool)))
   );
   const topTools = [...toolBreakdown]
     .sort((a, b) => b.monthlySpend - a.monthlySpend)
     .slice(0, 3)
-    .map((tool) => tool.tool);
+    .map((t) => t.tool);
   const highestSpendTool = toolBreakdown.length > 0 ? topTools[0] : null;
 
   const usageInsights = {
@@ -124,25 +297,30 @@ export const generateAudit = (
     toolCategories,
   };
 
-  const auditSummary = {
-    headline:
-      estimatedSavings > 0
-        ? "Audit complete with prioritized savings"
-        : "Current spend aligns with usage",
-    narrative:
-      estimatedSavings > 0
-        ? `We identified ${recommendations.length} optimization opportunities with ${potentialSavingsPercent}% potential savings across your current plans.`
-        : "Current plan mix appears reasonable. Continue monitoring seat utilization and vendor overlap for future optimization.",
-  };
+  // ── Contextual Governance & Opportunities ──────────────────────────────────
+  const hasApiTools = tools.some((t) =>
+    ["Anthropic API", "OpenAI API"].includes(t.tool)
+  );
+  const hasSeatsAboveTeam = tools.some((t) => t.seatCount > teamSize);
 
-  const governanceInsights = GOVERNANCE_INSIGHT_TEMPLATES.slice(
-    0,
-    request.tools.length >= 4 ? 3 : 2
+  const governanceInsights = selectGovernanceInsights(
+    tools.length,
+    crossToolResults,
+    hasApiTools
   );
 
-  const optimizationOpportunities = OPTIMIZATION_OPPORTUNITY_TEMPLATES.slice(
-    0,
-    request.tools.length >= 3 ? 4 : 3
+  const optimizationOpportunities = selectOptimizationOpportunities(
+    crossToolResults,
+    hasApiTools,
+    hasSeatsAboveTeam
+  );
+
+  // ── Executive Summary ──────────────────────────────────────────────────────
+  const auditSummary = buildAuditSummary(
+    estimatedSavings,
+    potentialSavingsPercent,
+    recommendations.filter((r) => r.estimatedSavingsImpact > 0).length,
+    totalMonthlySpend
   );
 
   return {

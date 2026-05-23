@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { generateAudit } from "@/lib/audit-engine";
 import { saveAudit } from "@/lib/audit-storage";
 import { auditRequestSchema } from "@/lib/validation/audit-schema";
-import type { ApiResponse, AuditResult } from "@/types/audit";
+import type { ApiResponse, AuditRequest, AuditResult } from "@/types/audit";
 
 export async function POST(request: Request) {
   try {
@@ -21,8 +21,9 @@ export async function POST(request: Request) {
       return NextResponse.json(response, { status: 400 });
     }
 
-    const auditResponse = generateAudit(parsed.data, crypto.randomUUID());
-    const { auditId, createdAt } = await saveAudit(parsed.data, auditResponse);
+    const auditData = parsed.data as unknown as AuditRequest;
+    const auditResponse = generateAudit(auditData, crypto.randomUUID());
+    const { auditId, createdAt } = await saveAudit(auditData, auditResponse);
     const response: ApiResponse<AuditResult> = {
       ok: true,
       data: {

@@ -31,6 +31,7 @@ export function AuditReportPanel({ audit }: AuditReportPanelProps) {
     const storageKey = `audit-unlock:${audit.auditId}`;
     const stored = sessionStorage.getItem(storageKey);
     if (stored === "unlocked") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnlockState("unlocked");
     }
   }, [audit.auditId]);
