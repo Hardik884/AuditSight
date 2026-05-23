@@ -102,6 +102,50 @@ export function AuditResultDetails({
       {showDetails ? (
         <div className="rounded-3xl border border-border/60 bg-background/90 p-6 shadow-sm">
           <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            Tool breakdown
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {auditResponse?.toolBreakdown?.map((tool) => (
+              <div
+                key={`${tool.tool}-${tool.plan}`}
+                className="rounded-2xl border border-border/60 bg-background/80 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {tool.tool}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {tool.plan} plan
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    {tool.seatCount} seats
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-300">
+                  <span>Current spend</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                    {formatCurrency(tool.monthlySpend)} / mo
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-300">
+                  <span>Projected savings</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-300">
+                    {formatCurrency(tool.projectedSavings)} / mo
+                  </span>
+                </div>
+                <div className="mt-3 rounded-xl border border-border/60 bg-white/80 px-3 py-2 text-xs text-slate-600 dark:bg-slate-950/60 dark:text-slate-300">
+                  <p className="font-semibold text-slate-900 dark:text-slate-100">
+                    {tool.recommendedAction}
+                  </p>
+                  <p className="mt-1">{tool.rationale}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-6 text-sm font-semibold text-slate-900 dark:text-slate-100">
             Recommended priorities
           </p>
           <div className="mt-4 space-y-3">
@@ -153,9 +197,9 @@ export function AuditResultDetails({
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Prompt volume</span>
+                    <span>Highest spend</span>
                     <span className="font-semibold text-slate-700 dark:text-slate-200">
-                      {auditResponse.usageInsights.promptVolume}
+                      {auditResponse.usageInsights.highestSpendTool ?? "—"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">

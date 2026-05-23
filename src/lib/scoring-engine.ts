@@ -1,18 +1,8 @@
-import type {
-  AuditRequest,
-  ConfidenceLevel,
-  RiskLevel,
-} from "@/types/audit";
+import type { ConfidenceLevel, RiskLevel, ToolSelection } from "@/types/audit";
 import {
-  IMPACT_MULTIPLIER,
-  MIN_ESTIMATED_SAVINGS,
   OPTIMIZATION_SCORE_CONFIG,
-  POTENTIAL_SAVINGS_PERCENT_RANGE,
   RISK_SCORE_LIMITS,
   RISK_THRESHOLDS,
-  SIZE_FACTORS,
-  TOOL_FACTOR_INCREMENT,
-  USAGE_INSIGHTS,
 } from "@/constants/audit-config";
 
 export const clamp = (value: number, min: number, max: number) =>
@@ -25,35 +15,38 @@ export const computeRiskLevel = (score: number): RiskLevel => {
   return "Low";
 };
 
-export const computeRiskScore = (request: AuditRequest) => {
+export const computeRiskScore = (
+  teamSize: number,
+  toolCount: number,
+  totalMonthlySpend: number
+) => {
   let score = 0;
   const [lowSpend, midSpend, highSpend] = RISK_SCORE_LIMITS.spend;
   const [toolMid, toolHigh] = RISK_SCORE_LIMITS.toolCounts;
 
-  if (request.monthlySpend > highSpend) score += 3;
-  else if (request.monthlySpend > midSpend) score += 2;
-  else if (request.monthlySpend > lowSpend) score += 1;
+  if (totalMonthlySpend > highSpend) score += 3;
+  else if (totalMonthlySpend > midSpend) score += 2;
+  else if (totalMonthlySpend > lowSpend) score += 1;
 
-  if (request.teamSize === "500+") score += 3;
-  else if (request.teamSize === "101-500") score += 2;
-  else if (request.teamSize === "26-100") score += 1;
+  if (teamSize >= 500) score += 3;
+  else if (teamSize >= 100) score += 2;
+  else if (teamSize >= 25) score += 1;
 
-  if (request.selectedTools.length >= toolHigh) score += 2;
-  else if (request.selectedTools.length >= toolMid) score += 1;
-
-  if (request.biggestChallenge === "Overlapping subscriptions") score += 2;
-  if (request.biggestChallenge === "Spend volatility") score += 1;
+  if (toolCount >= toolHigh) score += 2;
+  else if (toolCount >= toolMid) score += 1;
 
   return score;
 };
 
-export const computeOptimizationScore = (request: AuditRequest) => {
+export const computeOptimizationScore = (
+  toolCount: number,
+  highTierCount: number,
+  seatUtilizationPercent: number
+) => {
   const complexityPenalty =
-    request.selectedTools.length * OPTIMIZATION_SCORE_CONFIG.toolPenalty +
-    (request.biggestChallenge === "Spend volatility"
-      ? OPTIMIZATION_SCORE_CONFIG.challengePenalty
-      : OPTIMIZATION_SCORE_CONFIG.toolPenalty) +
-    (request.teamSize === "500+" ? OPTIMIZATION_SCORE_CONFIG.sizePenalty : OPTIMIZATION_SCORE_CONFIG.toolPenalty);
+    toolCount * OPTIMIZATION_SCORE_CONFIG.toolPenalty +
+    highTierCount * 3 +
+    (seatUtilizationPercent < 60 ? OPTIMIZATION_SCORE_CONFIG.sizePenalty : 0);
 
   return clamp(
     OPTIMIZATION_SCORE_CONFIG.baseScore - complexityPenalty,
@@ -62,37 +55,32 @@ export const computeOptimizationScore = (request: AuditRequest) => {
   );
 };
 
-export const computeConfidence = (request: AuditRequest): ConfidenceLevel => {
-  if (request.selectedTools.length >= 4 && request.monthlySpend > 60_000) {
+export const computeConfidence = (
+  toolCount: number,
+  totalMonthlySpend: number
+): ConfidenceLevel => {
+  if (toolCount >= 4 && totalMonthlySpend > 60_000) {
     return "High";
   }
-  if (request.selectedTools.length >= 2) return "Medium";
+  if (toolCount >= 2) return "Medium";
   return "Low";
 };
 
-export const computeEstimatedSavings = (request: AuditRequest) => {
-  const sizeFactor = SIZE_FACTORS[request.teamSize];
-  const toolFactor = 1 + request.selectedTools.length * TOOL_FACTOR_INCREMENT;
-  const base = request.monthlySpend * sizeFactor * toolFactor;
-  return Math.max(base, MIN_ESTIMATED_SAVINGS);
+export const computeSeatUtilization = (teamSize: number, totalSeats: number) => {
+  if (teamSize <= 0) return 0;
+  return clamp(Math.round((totalSeats / teamSize) * 100), 0, 100);
 };
 
-export const computePotentialSavingsPercent = (request: AuditRequest, estimatedSavings: number) =>
-  clamp(
-    Math.round((estimatedSavings / request.monthlySpend) * 100),
-    POTENTIAL_SAVINGS_PERCENT_RANGE.min,
-    POTENTIAL_SAVINGS_PERCENT_RANGE.max
-  );
+export const computePotentialSavingsPercent = (
+  estimatedSavings: number,
+  totalMonthlySpend: number
+) => {
+  if (totalMonthlySpend <= 0) return 0;
+  return clamp(Math.round((estimatedSavings / totalMonthlySpend) * 100), 0, 40);
+};
 
-export const computeImpactMultiplier = (monthlySpend: number) =>
-  clamp(monthlySpend / IMPACT_MULTIPLIER.divisor, IMPACT_MULTIPLIER.min, IMPACT_MULTIPLIER.max);
+export const computeTotalMonthlySpend = (tools: ToolSelection[]) =>
+  tools.reduce((total, tool) => total + tool.monthlySpend, 0);
 
-export const computeSeatUtilization = (toolCount: number) =>
-  clamp(100 - toolCount * 8, USAGE_INSIGHTS.minSeatUtilization, USAGE_INSIGHTS.maxSeatUtilization);
-
-export const computePromptVolume = (monthlySpend: number) =>
-  clamp(
-    Math.round(monthlySpend / USAGE_INSIGHTS.promptVolumeDivisor),
-    USAGE_INSIGHTS.promptVolumeMin,
-    USAGE_INSIGHTS.promptVolumeMax
-  );
+export const computeTotalSeats = (tools: ToolSelection[]) =>
+  tools.reduce((total, tool) => total + tool.seatCount, 0);

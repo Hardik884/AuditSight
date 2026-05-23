@@ -1,40 +1,7 @@
-export type TeamSize = "1-25" | "26-100" | "101-500" | "500+";
+import type { ToolCategory, ToolName, ToolPlan } from "@/constants/pricing";
+export type { ToolCategory, ToolName, ToolPlan } from "@/constants/pricing";
 
-export type ToolName =
-  | "ChatGPT"
-  | "Claude"
-  | "Cursor"
-  | "GitHub Copilot"
-  | "Gemini"
-  | "Perplexity";
-
-export type ToolCategory =
-  | "LLM"
-  | "Developer"
-  | "Search"
-  | "Assistant"
-  | "Productivity";
-
-export type Challenge =
-  | "Unclear ROI"
-  | "Overlapping subscriptions"
-  | "Spend volatility"
-  | "Model quality drift";
-
-export type AuditGoal =
-  | "Reduce monthly spend"
-  | "Improve usage governance"
-  | "Consolidate vendors"
-  | "Optimize model routing";
-
-export type PrimaryUseCase =
-  | "Engineering"
-  | "Marketing"
-  | "Research"
-  | "Customer Support"
-  | "Operations"
-  | "Sales"
-  | "Content Creation";
+export type PrimaryUseCase = "Coding" | "Writing" | "Data" | "Research" | "Mixed";
 
 export type RiskLevel = "Low" | "Moderate" | "High" | "Critical";
 
@@ -46,13 +13,27 @@ export type DifficultyLevel = "Low" | "Medium" | "High";
 
 export type EmailCaptureSource = "report-unlock";
 
-export interface AuditRequest {
-  teamSize: TeamSize;
-  selectedTools: ToolName[];
+export interface ToolSelection {
+  tool: ToolName;
+  plan: ToolPlan;
   monthlySpend: number;
-  biggestChallenge: Challenge;
-  auditGoals: AuditGoal[];
+  seatCount: number;
+}
+
+export interface AuditRequest {
   primaryUseCase: PrimaryUseCase;
+  teamSize: number;
+  tools: ToolSelection[];
+}
+
+export interface ToolBreakdown {
+  tool: ToolName;
+  plan: ToolPlan;
+  monthlySpend: number;
+  seatCount: number;
+  recommendedAction: string;
+  projectedSavings: number;
+  rationale: string;
 }
 
 export interface Recommendation {
@@ -70,6 +51,8 @@ export interface AuditMetrics {
   optimizationScore: number;
   riskLevel: RiskLevel;
   potentialSavingsPercent: number;
+  totalMonthlySpend: number;
+  totalSeats: number;
 }
 
 export interface AuditSummary {
@@ -80,7 +63,7 @@ export interface AuditSummary {
 export interface UsageInsights {
   topTools: ToolName[];
   seatUtilizationPercent: number;
-  promptVolume: number;
+  highestSpendTool: ToolName | null;
   toolCategories: ToolCategory[];
 }
 
@@ -91,6 +74,7 @@ export interface AuditResponse {
   recommendations: Recommendation[];
   auditSummary: AuditSummary;
   usageInsights: UsageInsights;
+  toolBreakdown: ToolBreakdown[];
   optimizationOpportunities: string[];
   governanceInsights: string[];
 }
@@ -100,12 +84,11 @@ export interface AuditResult extends AuditResponse {}
 export interface AuditRow {
   id?: string;
   created_at?: string;
-  team_size: TeamSize;
+  team_size: number;
   primary_use_case: PrimaryUseCase;
-  tools: ToolName[];
-  monthly_spend: number;
-  challenges: Challenge;
-  goals: AuditGoal[];
+  tools: ToolSelection[];
+  total_monthly_spend: number;
+  total_seats: number;
   estimated_savings: number;
   annual_savings: number;
   optimization_score: number;
@@ -115,6 +98,7 @@ export interface AuditRow {
   governance_insights: string[];
   usage_insights: UsageInsights;
   audit_summary: AuditSummary;
+  tool_breakdown: ToolBreakdown[];
   optimization_opportunities: string[];
   request_id?: string;
 }

@@ -5,17 +5,15 @@ create table if not exists public.audits (
 
   created_at timestamptz not null default now(),
 
-  team_size text not null,
+  team_size integer not null,
 
   primary_use_case text not null,
 
   tools jsonb not null,
 
-  monthly_spend numeric not null,
+  total_monthly_spend numeric not null,
 
-  challenges text not null,
-
-  goals text[] not null,
+  total_seats integer not null,
 
   estimated_savings numeric not null,
 
@@ -34,6 +32,8 @@ create table if not exists public.audits (
   usage_insights jsonb not null,
 
   audit_summary jsonb not null,
+
+  tool_breakdown jsonb not null,
 
   optimization_opportunities jsonb not null,
 

@@ -1,67 +1,68 @@
-import type { AuditRequest, Recommendation } from "@/types/audit";
-import {
-  CHALLENGE_RECOMMENDATIONS,
-  GOAL_RECOMMENDATIONS,
-  TOOL_BASED_RECOMMENDATIONS,
-  TOOL_CATEGORY_MAP,
-  USE_CASE_RECOMMENDATIONS,
-} from "@/lib/audit-rules";
-import { RECOMMENDATION_LIMITS } from "@/constants/audit-config";
-import { computeConfidence, computeImpactMultiplier } from "@/lib/scoring-engine";
+import type { AuditRequest, Recommendation, ToolBreakdown } from "@/types/audit";
+import { LLM_TOOLS } from "@/lib/audit-rules";
+import { computeConfidence } from "@/lib/scoring-engine";
 
-const adjustRecommendationImpact = (
-  recommendation: Recommendation,
-  multiplier: number
+const baseRecommendation = (
+  overrides: Partial<Recommendation>
 ): Recommendation => ({
-  ...recommendation,
-  estimatedSavingsImpact: Math.round(recommendation.estimatedSavingsImpact * multiplier),
+  title: "Optimization review",
+  description: "Review vendor usage against team needs.",
+  confidence: "Medium",
+  estimatedSavingsImpact: 0,
+  severity: "Low",
+  difficulty: "Low",
+  ...overrides,
 });
 
-const adjustDifficulty = (recommendation: Recommendation, factor: number): Recommendation => {
-  if (factor > 1.2 && recommendation.difficulty === "Low") {
-    return { ...recommendation, difficulty: "Medium" };
+export const buildRecommendations = (
+  request: AuditRequest,
+  toolBreakdown: ToolBreakdown[]
+) => {
+  const confidence = computeConfidence(request.tools.length, request.tools.reduce((sum, tool) => sum + tool.monthlySpend, 0));
+  const recommendations: Recommendation[] = [];
+
+  const llmTools = request.tools.filter((tool) => LLM_TOOLS.includes(tool.tool));
+  const llmSpend = llmTools.reduce((sum, tool) => sum + tool.monthlySpend, 0);
+
+  if (llmTools.length >= 2 && llmSpend > 0) {
+    recommendations.push(
+      baseRecommendation({
+        title: "Consolidate overlapping LLM subscriptions",
+        description: "Reduce redundant LLM plans and route workloads to primary vendors.",
+        confidence,
+        estimatedSavingsImpact: Math.round(llmSpend * 0.1),
+        severity: "Medium",
+        difficulty: "Medium",
+      })
+    );
   }
-  if (factor > 1.4 && recommendation.difficulty === "Medium") {
-    return { ...recommendation, difficulty: "High" };
+
+  toolBreakdown.forEach((entry) => {
+    if (entry.projectedSavings <= 0) return;
+    recommendations.push(
+      baseRecommendation({
+        title: entry.recommendedAction,
+        description: entry.rationale,
+        confidence,
+        estimatedSavingsImpact: entry.projectedSavings,
+        severity: entry.projectedSavings > 2000 ? "High" : "Medium",
+        difficulty: "Low",
+      })
+    );
+  });
+
+  if (recommendations.length === 0) {
+    recommendations.push(
+      baseRecommendation({
+        title: "Spend is aligned to current usage",
+        description: "No immediate reductions detected based on the current plans and seat counts.",
+        confidence: "Medium",
+        estimatedSavingsImpact: 0,
+        severity: "Low",
+        difficulty: "Low",
+      })
+    );
   }
-  return recommendation;
-};
 
-export const buildRecommendations = (request: AuditRequest) => {
-  const confidence = computeConfidence(request);
-  const impactMultiplier = computeImpactMultiplier(request.monthlySpend);
-  const toolCategories = Array.from(
-    new Set(request.selectedTools.map((tool) => TOOL_CATEGORY_MAP[tool]))
-  );
-
-  const baseRecs = [
-    ...CHALLENGE_RECOMMENDATIONS[request.biggestChallenge],
-    USE_CASE_RECOMMENDATIONS[request.primaryUseCase],
-    ...request.auditGoals.map((goal) => GOAL_RECOMMENDATIONS[goal]),
-  ];
-
-  const toolRecs = toolCategories.includes("Developer")
-    ? [TOOL_BASED_RECOMMENDATIONS[0]]
-    : [];
-  const llmRecs = toolCategories.includes("LLM")
-    ? [TOOL_BASED_RECOMMENDATIONS[1]]
-    : [];
-  const searchRecs = toolCategories.includes("Search")
-    ? [TOOL_BASED_RECOMMENDATIONS[2]]
-    : [];
-
-  const totalRecommendations = Math.min(
-    RECOMMENDATION_LIMITS.max,
-    RECOMMENDATION_LIMITS.base + request.selectedTools.length
-  );
-
-  return [...baseRecs, ...toolRecs, ...llmRecs, ...searchRecs]
-    .slice(0, totalRecommendations)
-    .map((recommendation) => ({
-      ...adjustDifficulty(
-        adjustRecommendationImpact(recommendation, impactMultiplier),
-        impactMultiplier
-      ),
-      confidence,
-    }));
+  return recommendations;
 };

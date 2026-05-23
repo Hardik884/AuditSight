@@ -4,23 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import type {
-  AuditGoal,
   AuditRequest,
-  Challenge,
   PrimaryUseCase,
-  TeamSize,
-  ToolName,
+  ToolSelection,
 } from "@/types/audit";
 import { AuditForm } from "@/components/forms/AuditForm";
 import { AuditLoadingState } from "@/components/forms/AuditLoadingState";
 import { requestAudit } from "@/lib/api/audit-client";
 import {
-  AUDIT_GOALS,
-  CHALLENGES,
   PRIMARY_USE_CASES,
-  TEAM_SIZES,
-  TOOL_NAMES,
+  TEAM_SIZE_LIMITS,
 } from "@/constants/audit-config";
+import { TOOL_NAMES, getPlanOptions } from "@/constants/pricing";
 
 const progressSteps = [
   "Analyzing AI stack...",
@@ -29,22 +24,27 @@ const progressSteps = [
 ] as const;
 
 type Status = "idle" | "loading" | "complete";
+const STORAGE_KEY = "audit-intake-v2";
+
+const createDefaultTool = (tool = TOOL_NAMES[0]): ToolSelection => {
+  const plan = getPlanOptions(tool)[0];
+  const isApiPlan = plan.toLowerCase().includes("api");
+  return {
+    tool,
+    plan,
+    monthlySpend: 0,
+    seatCount: isApiPlan ? 0 : 1,
+  };
+};
 
 export function AuditIntakeSection() {
-  const [selectedSize, setSelectedSize] = useState<TeamSize>(TEAM_SIZES[1]);
-  const [selectedTools, setSelectedTools] = useState<ToolName[]>([
-    TOOL_NAMES[0],
-  ]);
-  const [monthlySpend, setMonthlySpend] = useState<string>("$25,000");
-  const [selectedChallenge, setSelectedChallenge] = useState<Challenge>(
-    CHALLENGES[1]
-  );
-  const [selectedGoals, setSelectedGoals] = useState<AuditGoal[]>([
-    AUDIT_GOALS[0],
-  ]);
+  const [teamSize, setTeamSize] = useState<number>(25);
   const [primaryUseCase, setPrimaryUseCase] = useState<PrimaryUseCase>(
     PRIMARY_USE_CASES[0]
   );
+  const [toolEntries, setToolEntries] = useState<ToolSelection[]>([
+    createDefaultTool(),
+  ]);
   const [status, setStatus] = useState<Status>("idle");
   const [progressIndex, setProgressIndex] = useState<number>(0);
   const [progressDone, setProgressDone] = useState<boolean>(false);
@@ -53,10 +53,10 @@ export function AuditIntakeSection() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const router = useRouter();
 
-  const spendValue = useMemo(() => {
-    const numeric = Number(monthlySpend.replace(/[^0-9.]/g, ""));
-    return Number.isFinite(numeric) ? numeric : 0;
-  }, [monthlySpend]);
+  const availableTools = useMemo(
+    () => TOOL_NAMES.filter((tool) => !toolEntries.some((entry) => entry.tool === tool)),
+    [toolEntries]
+  );
 
   const progressPercent = useMemo(() => {
     const stepCount = progressSteps.length;
@@ -64,6 +64,56 @@ export function AuditIntakeSection() {
     if (status === "complete") return 100;
     return Math.round(((progressIndex + 1) / stepCount) * 100);
   }, [progressIndex, status]);
+
+  useEffect(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as Partial<{
+        teamSize: number;
+        primaryUseCase: PrimaryUseCase;
+        tools: ToolSelection[];
+      }>;
+
+      if (typeof parsed.teamSize === "number") {
+        setTeamSize(parsed.teamSize);
+      }
+      if (parsed.primaryUseCase && PRIMARY_USE_CASES.includes(parsed.primaryUseCase)) {
+        setPrimaryUseCase(parsed.primaryUseCase);
+      }
+      if (Array.isArray(parsed.tools) && parsed.tools.length > 0) {
+        const sanitized = parsed.tools
+          .filter((tool) => TOOL_NAMES.includes(tool.tool))
+          .map((tool) => {
+            const plans = getPlanOptions(tool.tool);
+            const plan = plans.includes(tool.plan) ? tool.plan : plans[0];
+            return {
+              tool: tool.tool,
+              plan,
+              monthlySpend: Number.isFinite(tool.monthlySpend) ? tool.monthlySpend : 0,
+              seatCount: Number.isFinite(tool.seatCount) ? tool.seatCount : 0,
+            };
+          });
+
+        if (sanitized.length > 0) {
+          setToolEntries(sanitized);
+        }
+      }
+    } catch (error) {
+      console.warn("Unable to restore audit intake state", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        teamSize,
+        primaryUseCase,
+        tools: toolEntries,
+      })
+    );
+  }, [primaryUseCase, teamSize, toolEntries]);
 
 
   useEffect(() => {
@@ -99,16 +149,24 @@ export function AuditIntakeSection() {
     router.push(`/audit/${auditId}`);
   }, [auditId, progressDone, router]);
 
-  const toggleSelection = <T extends string>(
-    value: T,
-    values: T[],
-    setValues: (next: T[]) => void
+  const addTool = (tool: ToolSelection["tool"]) => {
+    if (toolEntries.some((entry) => entry.tool === tool)) return;
+    setToolEntries((current) => [...current, createDefaultTool(tool)]);
+  };
+
+  const removeTool = (tool: ToolSelection["tool"]) => {
+    setToolEntries((current) => current.filter((entry) => entry.tool !== tool));
+  };
+
+  const updateTool = (
+    tool: ToolSelection["tool"],
+    patch: Partial<ToolSelection>
   ) => {
-    if (values.includes(value)) {
-      setValues(values.filter((item) => item !== value));
-      return;
-    }
-    setValues([...values, value]);
+    setToolEntries((current) =>
+      current.map((entry) =>
+        entry.tool === tool ? { ...entry, ...patch } : entry
+      )
+    );
   };
 
   const resetFlow = () => {
@@ -122,20 +180,24 @@ export function AuditIntakeSection() {
 
   const handleGenerate = async () => {
     if (status === "loading") return;
-    if (selectedTools.length === 0) {
-      setFormError("Select at least one AI tool to continue.");
-      return;
-    }
-    if (selectedGoals.length === 0) {
-      setFormError("Select at least one audit goal to continue.");
+    if (toolEntries.length === 0) {
+      setFormError("Add at least one AI tool to continue.");
       return;
     }
     if (!primaryUseCase) {
       setFormError("Select a primary use case to continue.");
       return;
     }
-    if (spendValue <= 0) {
-      setFormError("Enter a valid monthly spend amount.");
+    if (teamSize < TEAM_SIZE_LIMITS.min || teamSize > TEAM_SIZE_LIMITS.max) {
+      setFormError("Enter a valid team size to continue.");
+      return;
+    }
+
+    const invalidTool = toolEntries.find(
+      (tool) => tool.monthlySpend < 0 || tool.seatCount < 0
+    );
+    if (invalidTool) {
+      setFormError("Tool spend and seat counts must be zero or greater.");
       return;
     }
 
@@ -144,12 +206,9 @@ export function AuditIntakeSection() {
     setStatus("loading");
 
     const payload: AuditRequest = {
-      teamSize: selectedSize,
-      selectedTools,
-      monthlySpend: spendValue,
-      biggestChallenge: selectedChallenge,
-      auditGoals: selectedGoals,
       primaryUseCase,
+      teamSize,
+      tools: toolEntries,
     };
 
     const result = await requestAudit(payload);
@@ -162,8 +221,6 @@ export function AuditIntakeSection() {
       );
       return;
     }
-    console.log(result);
-    console.log(result.data.auditId);
     setAuditId(result.data.auditId);
   };
 
@@ -188,29 +245,18 @@ export function AuditIntakeSection() {
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <AuditForm
-            teamSizes={TEAM_SIZES}
-            aiTools={TOOL_NAMES}
-            challenges={CHALLENGES}
-            goals={AUDIT_GOALS}
             primaryUseCases={PRIMARY_USE_CASES}
-            selectedSize={selectedSize}
-            selectedTools={selectedTools}
-            monthlySpend={monthlySpend}
-            selectedChallenge={selectedChallenge}
-            selectedGoals={selectedGoals}
+            teamSize={teamSize}
+            toolEntries={toolEntries}
+            availableTools={availableTools}
             selectedPrimaryUseCase={primaryUseCase}
             isSubmitting={status === "loading"}
             errorMessage={formError}
-            onSelectSize={setSelectedSize}
-            onToggleTool={(tool) =>
-              toggleSelection(tool, selectedTools, setSelectedTools)
-            }
-            onSpendChange={setMonthlySpend}
-            onSelectChallenge={setSelectedChallenge}
-            onToggleGoal={(goal) =>
-              toggleSelection(goal, selectedGoals, setSelectedGoals)
-            }
+            onTeamSizeChange={setTeamSize}
             onSelectPrimaryUseCase={setPrimaryUseCase}
+            onAddTool={addTool}
+            onRemoveTool={removeTool}
+            onUpdateTool={updateTool}
             onSubmit={handleGenerate}
           />
 
