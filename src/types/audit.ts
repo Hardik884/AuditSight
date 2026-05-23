@@ -105,6 +105,8 @@ export interface AuditRow {
   audit_summary: AuditSummary;
   tool_breakdown: ToolBreakdown[];
   optimization_opportunities: string[];
+  /** Drives the 'Book a Consultation' CTA; true when annual_savings >= 10000 */
+  consultation_recommended: boolean;
   request_id?: string;
 }
 

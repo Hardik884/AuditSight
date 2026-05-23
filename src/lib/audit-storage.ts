@@ -7,6 +7,7 @@ import type {
   EmailCaptureRow,
 } from "@/types/audit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { CONSULTATION_THRESHOLD } from "@/constants/audit-config";
 
 const AUDIT_TABLE = "audits";
 const EMAIL_CAPTURE_TABLE = "email_captures";
@@ -28,6 +29,8 @@ const toRow = (request: AuditRequest, response: AuditResponse): AuditRow => ({
   audit_summary: response.auditSummary,
   tool_breakdown: response.toolBreakdown,
   optimization_opportunities: response.optimizationOpportunities,
+  // Derived from annual_savings — mirrors the UI's showConsultationCta logic
+  consultation_recommended: response.metrics.annualSavings >= CONSULTATION_THRESHOLD,
   request_id: response.auditId,
 });
 
