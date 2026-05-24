@@ -136,6 +136,17 @@ create table if not exists public.audits (
   -- Contextually selected from OPTIMIZATION_OPPORTUNITY_TEMPLATES.
   -- Max 4 items; driven by copilot overlap, API tools, seat anomalies.
 
+  -- ── AI Intelligence Layer ──────────────────────────────────────────────────
+
+  ai_executive_summary text null,
+  -- AI-generated personalized executive summary produced by Google Gemini 2.5 Flash.
+  -- Generated server-side during audit creation and persisted alongside the audit.
+  -- NULL for audits created before this column was added or when the API is
+  -- unavailable/unconfigured. The UI always renders a summary — either from this
+  -- column or a high-quality deterministic fallback built from the rule engine outputs.
+  -- Safety: Gemini is instructed ONLY to summarize deterministic outputs; it never
+  -- computes savings figures, pricing, or financial recommendations independently.
+
   -- ── Traceability ──────────────────────────────────────────────────────────
 
   request_id uuid null

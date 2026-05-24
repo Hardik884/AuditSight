@@ -17,12 +17,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { staggerContainer, staggerChild, fadeUp, viewportOnce } from "@/lib/motion";
+import { AiExecutiveSummaryCard } from "@/components/forms/AiExecutiveSummaryCard";
 
 interface AuditResultDetailsProps {
   status: "idle" | "loading" | "complete";
   auditResponse: AuditResponse | null;
   formatCurrency: (value: number) => string;
   showFullReport?: boolean;
+  /** AI-generated executive summary from Gemini (falls back to deterministic template when absent) */
+  aiExecutiveSummary?: string;
 }
 
 // ── Badge helpers ─────────────────────────────────────────────────────────────
@@ -97,6 +100,7 @@ export function AuditResultDetails({
   auditResponse,
   formatCurrency,
   showFullReport = true,
+  aiExecutiveSummary,
 }: AuditResultDetailsProps) {
   const hasResults = status === "complete" && auditResponse;
   const showDetails = hasResults && showFullReport === true;
@@ -107,8 +111,16 @@ export function AuditResultDetails({
   const isStackOptimized =
     hasResults && (auditResponse?.metrics.estimatedSavings ?? 0) < 100;
 
+  // Surface the AI summary: prefer the prop, then fall back to the auditResponse field
+  const resolvedAiSummary = aiExecutiveSummary ?? auditResponse?.aiExecutiveSummary;
+
   return (
     <div className="flex flex-col gap-6">
+
+      {/* ── AI Executive Summary ───────────────────────────────────────── */}
+      {hasResults && (
+        <AiExecutiveSummaryCard summary={resolvedAiSummary} />
+      )}
 
       {/* ── Executive Summary ──────────────────────────────────────────── */}
       <motion.div

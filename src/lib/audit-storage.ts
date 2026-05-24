@@ -31,6 +31,8 @@ const toRow = (request: AuditRequest, response: AuditResponse): AuditRow => ({
   optimization_opportunities: response.optimizationOpportunities,
   // Derived from annual_savings — mirrors the UI's showConsultationCta logic
   consultation_recommended: response.metrics.annualSavings >= CONSULTATION_THRESHOLD,
+  // AI-generated executive summary — null when Gemini was unavailable or fell back
+  ai_executive_summary: response.aiExecutiveSummary ?? null,
   request_id: response.auditId,
 });
 
@@ -52,6 +54,8 @@ const fromRow = (row: AuditRow & { id: string; created_at: string }): AuditResul
   toolBreakdown: row.tool_breakdown ?? [],
   optimizationOpportunities: row.optimization_opportunities ?? [],
   governanceInsights: row.governance_insights ?? [],
+  // Restore persisted AI summary — undefined when column is null or absent
+  aiExecutiveSummary: row.ai_executive_summary ?? undefined,
 });
 
 export const saveAudit = async (request: AuditRequest, response: AuditResponse) => {

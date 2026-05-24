@@ -81,6 +81,12 @@ export interface AuditResponse {
   toolBreakdown: ToolBreakdown[];
   optimizationOpportunities: string[];
   governanceInsights: string[];
+  /**
+   * AI-generated executive summary from Gemini.
+   * Only present if the Gemini API call succeeded during audit creation.
+   * Falls back to a high-quality deterministic summary when absent.
+   */
+  aiExecutiveSummary?: string;
 }
 
 // AuditResult is an alias for AuditResponse (used in API response typing)
@@ -107,6 +113,8 @@ export interface AuditRow {
   optimization_opportunities: string[];
   /** Drives the 'Book a Consultation' CTA; true when annual_savings >= 10000 */
   consultation_recommended: boolean;
+  /** AI-generated personalized executive summary from Gemini (null when API unavailable) */
+  ai_executive_summary?: string | null;
   request_id?: string;
 }
 

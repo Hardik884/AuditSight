@@ -49,6 +49,7 @@ export function AuditReportPanel({ audit }: AuditReportPanelProps) {
         auditResponse={audit}
         formatCurrency={formatCurrency}
         showFullReport={isUnlocked}
+        aiExecutiveSummary={audit.aiExecutiveSummary}
       />
       {!isUnlocked ? (
         <ReportUnlockCard auditId={audit.auditId} onUnlock={handleUnlock} />
