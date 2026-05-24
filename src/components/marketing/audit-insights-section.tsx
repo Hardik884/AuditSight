@@ -1,10 +1,15 @@
-import { Badge } from "@/components/ui/badge";
+"use client";
+
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { TrendingDown, Shield, Zap } from "lucide-react";
+import { staggerContainer, staggerChild, fadeUp, viewportOnce } from "@/lib/motion";
 
 const spendCategories = [
-  { label: "LLM APIs", value: "$62.4k", percent: 62 },
-  { label: "Developer tooling", value: "$28.1k", percent: 28 },
-  { label: "Automation agents", value: "$12.8k", percent: 13 },
-  { label: "Prompt ops", value: "$8.9k", percent: 9 },
+  { label: "LLM APIs", value: "$62.4k", percent: 62, color: "bg-indigo-400" },
+  { label: "Developer tooling", value: "$28.1k", percent: 28, color: "bg-violet-400" },
+  { label: "Automation agents", value: "$12.8k", percent: 13, color: "bg-sky-400" },
+  { label: "Prompt ops", value: "$8.9k", percent: 9, color: "bg-emerald-400" },
 ];
 
 const recommendations = [
@@ -12,193 +17,224 @@ const recommendations = [
     title: "Downgrade 41 idle seats across 3 vendors",
     impact: "$12.4k saved",
     confidence: "High",
-    badgeClass:
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+    badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    icon: TrendingDown,
+    iconClass: "text-emerald-500",
   },
   {
     title: "Route 18% of summarization to lower-cost models",
     impact: "$8.1k saved",
     confidence: "Medium",
-    badgeClass:
-      "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+    badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    icon: Zap,
+    iconClass: "text-amber-500",
   },
   {
     title: "Add spend guardrails for internal copilots",
     impact: "$5.9k saved",
     confidence: "High",
-    badgeClass:
-      "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300",
+    badgeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+    icon: Shield,
+    iconClass: "text-indigo-500",
   },
 ];
+
+const analytics = [
+  { label: "Daily active prompts", value: "14.2k", percent: 74, color: "bg-indigo-400" },
+  { label: "Model routing efficiency", value: "91%", percent: 91, color: "bg-emerald-400" },
+  { label: "Cost per active seat", value: "$142", percent: 58, color: "bg-violet-400" },
+];
+
+function AnimatedBar({ percent, color, delay = 0 }: { percent: number; color: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, viewportOnce);
+  return (
+    <div ref={ref} className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+      <motion.div
+        className={`h-1.5 rounded-full ${color}`}
+        initial={{ width: 0 }}
+        animate={inView ? { width: `${percent}%` } : { width: 0 }}
+        transition={{ duration: 0.85, ease: [0.25, 0.46, 0.45, 0.94], delay }}
+      />
+    </div>
+  );
+}
 
 export function AuditInsightsSection() {
   return (
     <section
       id="example-audit"
-      className="border-y border-border/40 bg-slate-50/60 py-12 dark:bg-slate-950/40"
+      className="border-y border-border/40 bg-slate-50/50 py-20 dark:bg-slate-900/20 md:py-28"
     >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6">
-        <div className="max-w-3xl space-y-3">
-          <Badge
-            variant="outline"
-            className="border-border/60 bg-background/70 text-slate-600 dark:text-slate-300"
+      <div className="mx-auto w-full max-w-7xl px-6">
+
+        {/* Header */}
+        <motion.div
+          className="max-w-3xl space-y-4"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.span
+            variants={staggerChild}
+            className="inline-flex items-center rounded-full border border-border/70 bg-background px-3.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"
           >
             Example audit insights
-          </Badge>
-          <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-            A realistic audit report, delivered in hours.
-          </h2>
-          <p className="text-base text-slate-600 dark:text-slate-300">
-            Preview the depth and clarity executives receive with every AuditSight
-            assessment.
-          </p>
-        </div>
+          </motion.span>
+          <motion.h2
+            variants={fadeUp}
+            className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl"
+          >
+            A realistic audit report, delivered instantly.
+          </motion.h2>
+          <motion.p
+            variants={fadeUp}
+            className="text-lg text-slate-500 dark:text-slate-400"
+          >
+            Preview the depth and clarity executives receive with every AuditSight assessment.
+          </motion.p>
+        </motion.div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-slate-50 via-white to-slate-100/80 p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.55)] dark:from-slate-950 dark:via-slate-950/80 dark:to-slate-900/70">
-            <div className="grid gap-6">
-              <div className="rounded-2xl border border-border/60 bg-background/90 p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Total monthly spend
-                    </p>
-                    <p className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">
-                      $112,300
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-border/60 bg-slate-50/80 px-4 py-3 text-right shadow-sm dark:bg-slate-900/60">
-                    <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Health score
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
-                      78
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      Stable
-                    </p>
-                  </div>
+        {/* Main grid */}
+        <div className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+
+          {/* Left: spend overview */}
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            className="grid gap-5"
+          >
+            {/* KPI card */}
+            <div className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    Total monthly spend
+                  </p>
+                  <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                    $112,300
+                  </p>
                 </div>
-
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <span>Potential savings</span>
-                      <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                        $26.8k
-                      </span>
-                    </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                      <div className="h-2 w-[68%] rounded-full bg-emerald-400/80 dark:bg-emerald-400" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <span>Risk exposure</span>
-                      <span className="font-medium text-amber-600 dark:text-amber-400">
-                        Moderate
-                      </span>
-                    </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                      <div className="h-2 w-[42%] rounded-full bg-amber-400/80 dark:bg-amber-400" />
-                    </div>
-                  </div>
+                <div className="rounded-xl border border-border/60 bg-slate-50 px-4 py-3 text-right dark:bg-slate-900">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    Health score
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">78</p>
+                  <p className="mt-0.5 text-xs text-slate-400">Stable</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-border/60 bg-background/90 p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Spend categories
-                  </p>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    Last 30 days
-                  </span>
+              <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                <div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">Potential savings</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">$26.8k</span>
+                  </div>
+                  <AnimatedBar percent={68} color="bg-emerald-400" delay={0.2} />
                 </div>
-                <div className="mt-4 space-y-4">
-                  {spendCategories.map((category) => (
-                    <div key={category.label}>
-                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                        <span>{category.label}</span>
-                        <span className="font-medium text-slate-700 dark:text-slate-200">
-                          {category.value}
-                        </span>
-                      </div>
-                      <div className="mt-2 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                        <div
-                          className="h-2 rounded-full bg-indigo-400/70 dark:bg-indigo-400"
-                          style={{ width: `${category.percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">Risk exposure</span>
+                    <span className="font-semibold text-amber-600 dark:text-amber-400">Moderate</span>
+                  </div>
+                  <AnimatedBar percent={42} color="bg-amber-400" delay={0.35} />
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-6">
-            <div className="rounded-2xl border border-border/60 bg-background/90 p-5 shadow-sm">
+            {/* Spend categories */}
+            <div className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Optimization recommendations
+                  Spend categories
                 </p>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  3 new
-                </span>
+                <span className="text-xs text-slate-400">Last 30 days</span>
               </div>
-              <div className="mt-4 space-y-4">
-                {recommendations.map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-2xl border border-border/60 bg-slate-50/70 p-4 shadow-sm dark:bg-slate-900/50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${item.badgeClass}`}
-                      >
-                        {item.confidence} confidence
-                      </span>
-                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                        {item.impact}
-                      </span>
+              <div className="mt-5 space-y-4">
+                {spendCategories.map((cat, i) => (
+                  <div key={cat.label}>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">{cat.label}</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">{cat.value}</span>
                     </div>
-                    <p className="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {item.title}
-                    </p>
+                    <AnimatedBar percent={cat.percent} color={cat.color} delay={0.4 + i * 0.1} />
                   </div>
                 ))}
               </div>
             </div>
+          </motion.div>
 
-            <div className="rounded-2xl border border-border/60 bg-background/90 p-5 shadow-sm">
+          {/* Right: recommendations + analytics */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            className="flex flex-col gap-5"
+          >
+            {/* Recommendations */}
+            <div className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Top recommendations
+                </p>
+                <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                  3 new
+                </span>
+              </div>
+              <div className="mt-4 space-y-3">
+                {recommendations.map((item, i) => {
+                  const Icon = item.icon;
+                  return (
+                    <motion.div
+                      key={item.title}
+                      variants={staggerChild}
+                      className="rounded-xl border border-border/60 bg-slate-50/70 p-4 dark:bg-slate-900/50"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Icon className={`h-4 w-4 shrink-0 ${item.iconClass}`} />
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${item.badgeClass}`}>
+                            {item.confidence} confidence
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          {item.impact}
+                        </span>
+                      </div>
+                      <p className="mt-2.5 text-xs font-medium text-slate-800 dark:text-slate-200">
+                        {item.title}
+                      </p>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Usage analytics */}
+            <motion.div
+              variants={staggerChild}
+              className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm"
+            >
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Usage analytics
               </p>
               <div className="mt-4 space-y-4">
-                {[
-                  { label: "Daily active prompts", value: "14.2k", percent: 74 },
-                  { label: "Model routing efficiency", value: "91%", percent: 91 },
-                  { label: "Cost per active seat", value: "$142", percent: 58 },
-                ].map((row) => (
+                {analytics.map((row, i) => (
                   <div key={row.label}>
-                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                      <span>{row.label}</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-200">
-                        {row.value}
-                      </span>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">{row.label}</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">{row.value}</span>
                     </div>
-                    <div className="mt-2 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800">
-                      <div
-                        className="h-2 rounded-full bg-slate-400/70 dark:bg-slate-500"
-                        style={{ width: `${row.percent}%` }}
-                      />
-                    </div>
+                    <AnimatedBar percent={row.percent} color={row.color} delay={0.5 + i * 0.1} />
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

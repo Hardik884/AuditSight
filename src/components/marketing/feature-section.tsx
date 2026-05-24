@@ -1,87 +1,158 @@
-import { Badge } from "@/components/ui/badge";
+"use client";
+
+import { motion } from "framer-motion";
+import { TrendingDown, Users, GitBranch, Shield, BarChart3, Brain } from "lucide-react";
+import { staggerContainer, staggerChild, fadeUp, viewportOnce } from "@/lib/motion";
 
 const features = [
   {
     title: "Detect wasted AI spend",
     description:
       "Surface unused tokens, idle vendors, and redundant workflows across teams.",
-    accent: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+    icon: TrendingDown,
+    accent: "text-emerald-500 dark:text-emerald-400",
+    bg: "bg-emerald-500/8 dark:bg-emerald-500/10",
+    ring: "ring-emerald-500/15",
+    tag: "Savings",
+    tagClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   },
   {
     title: "Monitor seat utilization",
     description:
       "Track license usage and auto-flag overlapping subscriptions or inactive seats.",
-    accent: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300",
+    icon: Users,
+    accent: "text-indigo-500 dark:text-indigo-400",
+    bg: "bg-indigo-500/8 dark:bg-indigo-500/10",
+    ring: "ring-indigo-500/15",
+    tag: "Governance",
+    tagClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
   },
   {
     title: "Optimize model routing",
     description:
       "Route workloads to the right model tier based on cost, latency, and quality.",
-    accent: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
+    icon: GitBranch,
+    accent: "text-sky-500 dark:text-sky-400",
+    bg: "bg-sky-500/8 dark:bg-sky-500/10",
+    ring: "ring-sky-500/15",
+    tag: "Intelligence",
+    tagClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
   },
   {
     title: "Prevent spend spikes",
     description:
       "Apply guardrails with budget alerts, thresholds, and anomaly detection.",
-    accent: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+    icon: Shield,
+    accent: "text-amber-500 dark:text-amber-400",
+    bg: "bg-amber-500/8 dark:bg-amber-500/10",
+    ring: "ring-amber-500/15",
+    tag: "Risk",
+    tagClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   },
   {
     title: "Track AI ROI",
     description:
       "Tie usage to outcomes with cost-per-impact metrics and ROI reports.",
-    accent: "bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-200",
+    icon: BarChart3,
+    accent: "text-violet-500 dark:text-violet-400",
+    bg: "bg-violet-500/8 dark:bg-violet-500/10",
+    ring: "ring-violet-500/15",
+    tag: "Analytics",
+    tagClass: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
   },
   {
     title: "Budget intelligence",
     description:
       "Forecast quarterly AI spend with scenario modeling and team benchmarks.",
-    accent: "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300",
+    icon: Brain,
+    accent: "text-rose-500 dark:text-rose-400",
+    bg: "bg-rose-500/8 dark:bg-rose-500/10",
+    ring: "ring-rose-500/15",
+    tag: "Forecasting",
+    tagClass: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
   },
 ];
 
 export function FeatureSection() {
   return (
-    <section id="features" className="border-t border-border/40 py-12">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6">
-        <div className="max-w-2xl space-y-3">
-          <Badge
-            variant="outline"
-            className="border-border/60 bg-background/70 text-slate-600 dark:text-slate-300"
+    <section id="features" className="border-t border-border/40 py-20 md:py-28">
+      <div className="mx-auto w-full max-w-7xl px-6">
+
+        {/* Section header */}
+        <motion.div
+          className="max-w-2xl space-y-4"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          <motion.span
+            variants={staggerChild}
+            className="inline-flex items-center rounded-full border border-border/70 bg-background px-3.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"
           >
             Feature highlights
-          </Badge>
-          <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
+          </motion.span>
+          <motion.h2
+            variants={fadeUp}
+            className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl md:text-[2.5rem]"
+          >
             Spend visibility that feels effortless.
-          </h2>
-          <p className="text-base text-slate-600 dark:text-slate-300">
-            AuditSight centralizes usage, cost, and governance in one premium
-            workspace so leaders can scale AI responsibly.
-          </p>
-        </div>
+          </motion.h2>
+          <motion.p
+            variants={fadeUp}
+            className="text-lg text-slate-500 dark:text-slate-400"
+          >
+            AuditSight centralizes usage, cost, and governance in one
+            premium workspace so leaders can scale AI responsibly.
+          </motion.p>
+        </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="group rounded-2xl border border-border/60 bg-gradient-to-br from-background via-background to-slate-50/80 p-6 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.5)] transition dark:to-slate-900/60"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {feature.title}
-                </span>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${feature.accent}`}
-                >
-                  Signal
-                </span>
-              </div>
-              <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
-                {feature.description}
-              </p>
-              <div className="mt-6 h-1 w-12 rounded-full bg-gradient-to-r from-slate-200 via-slate-300 to-indigo-200 opacity-80 dark:from-slate-700 dark:via-slate-600 dark:to-indigo-500/40" />
-            </div>
-          ))}
-        </div>
+        {/* Feature grid */}
+        <motion.div
+          className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewportOnce}
+        >
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={feature.title}
+                variants={staggerChild}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-background p-6 shadow-sm transition-shadow duration-300 hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/20"
+              >
+                {/* Subtle gradient overlay on hover */}
+                <div className="absolute inset-0 -z-10 bg-gradient-to-br from-transparent via-transparent to-slate-50/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:to-slate-900/30" />
+
+                {/* Icon + tag row */}
+                <div className="flex items-start justify-between">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${feature.bg} ring-1 ${feature.ring}`}>
+                    <Icon className={`h-5 w-5 ${feature.accent}`} />
+                  </div>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${feature.tagClass}`}>
+                    {feature.tag}
+                  </span>
+                </div>
+
+                {/* Text */}
+                <div>
+                  <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                    {feature.description}
+                  </p>
+                </div>
+
+                {/* Bottom accent */}
+                <div className={`mt-auto h-0.5 w-12 rounded-full ${feature.bg} transition-all duration-300 group-hover:w-20`} />
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
     </section>
   );

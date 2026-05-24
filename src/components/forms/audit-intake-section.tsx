@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import type {
   AuditRequest,
   PrimaryUseCase,
@@ -235,22 +234,39 @@ export function AuditIntakeSection() {
   };
 
   return (
-    <section id="generate-audit" className="border-t border-border/40 py-12">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6">
-        <div className="max-w-2xl space-y-3">
-          <Badge
-            variant="outline"
-            className="border-border/60 bg-background/70 text-slate-600 dark:text-slate-300"
-          >
+    <section id="generate-audit" className="border-t border-border/40 py-16 md:py-20">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6">
+        {/* Section header */}
+        <div className="max-w-2xl space-y-4">
+          <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-3.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
             Audit intake
-          </Badge>
-          <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
+          </span>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-[2.25rem]">
             Start your AI spend audit in minutes.
           </h2>
-          <p className="text-base text-slate-600 dark:text-slate-300">
+          <p className="text-lg text-slate-500 dark:text-slate-400">
             Share a few details and AuditSight will generate an executive-grade
             audit focused on savings, governance, and ROI.
           </p>
+        </div>
+
+        {/* Step indicator */}
+        <div className="flex items-center gap-3">
+          {["Add your tools", "Configure spend & seats", "Generate audit"].map((step, i) => (
+            <div key={step} className="flex items-center gap-2">
+              <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                i === 0
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                  : "border border-border/60 text-slate-400"
+              }`}>
+                {i + 1}
+              </div>
+              <span className={`hidden text-xs font-medium sm:inline ${i === 0 ? "text-slate-900 dark:text-slate-100" : "text-slate-400"}`}>
+                {step}
+              </span>
+              {i < 2 && <div className="h-px w-8 bg-border/60" />}
+            </div>
+          ))}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">

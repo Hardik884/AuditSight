@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 import { saveEmailCapture } from "@/lib/api/email-capture-client";
 import type { EmailCaptureSource } from "@/types/audit";
+import { ArrowRight, Lock, CheckCircle2, Mail } from "lucide-react";
 
 interface ReportUnlockCardProps {
   auditId: string;
@@ -13,8 +12,14 @@ interface ReportUnlockCardProps {
 }
 
 type CaptureStatus = "idle" | "loading" | "success";
-
 const captureSource: EmailCaptureSource = "report-unlock";
+
+const UNLOCK_FEATURES = [
+  "Full tool-by-tool breakdown",
+  "Governance & compliance insights",
+  "Prioritized savings recommendations",
+  "Shareable executive PDF summary",
+];
 
 export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
   const [email, setEmail] = useState<string>("");
@@ -50,59 +55,139 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
     setStatus("success");
     setTimeout(() => {
       onUnlock();
-    }, 500);
+    }, 700);
   };
 
   return (
-    <div className="rounded-3xl border border-border/60 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.65)]">
-      <div className="flex flex-col gap-4">
-        <Badge className="text-emerald-300">Premium unlock</Badge>
-        <div>
-          <p className="text-xl font-semibold">Unlock the full audit report</p>
-          <p className="mt-2 text-sm text-slate-200/90">
-            Get detailed optimization insights, governance recommendations, and a
-            shareable audit your finance team can act on.
-          </p>
+    <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-7 text-white shadow-2xl shadow-black/30">
+      {/* Ambient glows */}
+      <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-indigo-500/12 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-emerald-500/8 blur-3xl" />
+
+      {/* Premium badge */}
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/8 ring-1 ring-white/10">
+          <Lock className="h-4 w-4 text-slate-300" />
         </div>
-
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-            <label className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-slate-300">
-              Work email
-            </label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="name@company.com"
-              className="mt-2 border-b border-white/20 text-white placeholder:text-slate-400 focus-visible:border-b-emerald-400"
-              aria-invalid={Boolean(errorMessage)}
-              disabled={status !== "idle"}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full bg-white text-slate-900 hover:bg-slate-100"
-            disabled={status === "loading"}
-          >
-            {status === "loading" ? "Unlocking report..." : "Unlock full report"}
-          </Button>
-        </form>
-
-        <div className="min-h-[1.5rem] text-xs text-slate-300">
-          {errorMessage ? (
-            <span className="text-rose-200">{errorMessage}</span>
-          ) : status === "success" ? (
-            <span className="text-emerald-300">
-              Report unlocked. Preparing your insights...
-            </span>
-          ) : (
-            <span>We only use this to deliver your audit. No spam.</span>
-          )}
-        </div>
+        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
+          Full report unlock
+        </span>
       </div>
+
+      {/* Copy */}
+      <div className="mt-5">
+        <h3 className="text-xl font-bold tracking-tight text-white">
+          Unlock your complete audit report
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">
+          Get the detailed breakdown your finance team needs to act.
+        </p>
+      </div>
+
+      {/* Feature list */}
+      <ul className="mt-5 space-y-2">
+        {UNLOCK_FEATURES.map((feature) => (
+          <li key={feature} className="flex items-center gap-2.5 text-sm text-slate-300">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+            {feature}
+          </li>
+        ))}
+      </ul>
+
+      {/* Divider */}
+      <div className="my-6 h-px bg-white/8" />
+
+      {/* Form */}
+      <AnimatePresence mode="wait">
+        {status !== "success" ? (
+          <motion.form
+            key="form"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col gap-4"
+            onSubmit={handleSubmit}
+          >
+            {/* Email input */}
+            <div className="group relative rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition focus-within:border-indigo-400/50 focus-within:bg-white/8 focus-within:ring-2 focus-within:ring-indigo-400/20">
+              <div className="flex items-center gap-2.5">
+                <Mail className="h-4 w-4 shrink-0 text-slate-500 group-focus-within:text-indigo-400" />
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    Work email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                    className="mt-1 w-full bg-transparent text-sm text-white placeholder:text-slate-600 focus:outline-none"
+                    aria-invalid={Boolean(errorMessage)}
+                    disabled={status !== "idle"}
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Error */}
+            <AnimatePresence>
+              {errorMessage && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs text-rose-400"
+                >
+                  {errorMessage}
+                </motion.p>
+              )}
+            </AnimatePresence>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3.5 text-sm font-bold text-slate-900 shadow-md shadow-black/20 transition-all hover:bg-slate-100 hover:shadow-lg active:scale-[0.98] disabled:opacity-60"
+            >
+              {status === "loading" ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-slate-900" />
+                  Unlocking...
+                </>
+              ) : (
+                <>
+                  Unlock full report
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
+            </button>
+
+            {/* Trust line */}
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-600">
+              <Lock className="h-3 w-3" />
+              No account required. We only use this to deliver your audit.
+            </div>
+          </motion.form>
+        ) : (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-3 py-4 text-center"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15 ring-1 ring-emerald-500/20">
+              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-white">Report unlocked!</p>
+              <p className="mt-1 text-sm text-slate-400">
+                Preparing your full audit insights...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
