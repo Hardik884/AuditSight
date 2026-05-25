@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { AuditReportPanel } from "@/components/forms/AuditReportPanel";
 import { getAuditById } from "@/lib/audit-storage";
+import { buildPublicAuditSummary } from "@/lib/public-audit";
+import { formatCurrency, getSiteUrl } from "@/lib/metadata";
 import type { Metadata } from "next";
 
 interface AuditPageProps {
@@ -10,9 +12,51 @@ interface AuditPageProps {
 
 export async function generateMetadata({ params }: AuditPageProps): Promise<Metadata> {
   const { id } = await params;
+  const audit = await getAuditById(id);
+  const siteUrl = getSiteUrl();
+  const metadataBase = new URL(siteUrl);
+
+  if (!audit) {
+    return {
+      title: "Audit Report — AuditSight",
+      description: "Executive AI spend audit report.",
+      metadataBase,
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const summary = buildPublicAuditSummary(audit);
+  const title = `${summary.headline} | AuditSight`;
+  const description = summary.description;
+  const ogImage = new URL(`/audit/${audit.auditId}/opengraph-image`, siteUrl);
+
   return {
-    title: `Audit Report — AuditSight`,
-    description: `View your AI spend audit results and optimization recommendations. Audit ID: ${id.slice(0, 8)}`,
+    title,
+    description,
+    metadataBase,
+    alternates: {
+      canonical: `/audit/${audit.auditId}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: `/audit/${audit.auditId}`,
+      images: [
+        {
+          url: ogImage.toString(),
+          width: 1200,
+          height: 630,
+          alt: `${formatCurrency(summary.annualSavings)} annual savings report`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage.toString()],
+    },
   };
 }
 
