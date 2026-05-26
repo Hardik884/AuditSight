@@ -25,8 +25,11 @@ import {
   ruleEnterpriseTinyTeam,
   ruleTeamPlanSolo,
   ruleHighSpendPerSeat,
+  ruleLowUtilizationHighSpend,
+  ruleSingleToolNoSpend,
   ruleCopilotOverlap,
   ruleLlmPremiumDuplicate,
+  ruleLlmGeminiDuplicate,
   ruleApiVsSeatSameVendor,
 } from "@/lib/audit-rules";
 import type { CrossToolRuleResult, RuleResult } from "@/lib/audit-rules";
@@ -41,7 +44,8 @@ import {
   computeConfidenceFromSignals,
 } from "@/lib/scoring-engine";
 import { buildRecommendations } from "@/lib/recommendation-engine";
-import { getToolCategory } from "@/constants/pricing";
+import { getToolCategory, getPlanDetail } from "@/constants/pricing";
+import { OPTIMIZATION_SCORE_CONFIG } from "@/constants/audit-config";
 
 // ─── Minimum savings threshold for the executive summary optimism ─────────────
 
@@ -57,14 +61,17 @@ const EXECUTIVE_SAVINGS_FLOOR = 100;
  */
 const runPerToolRules = (
   entry: ToolSelection,
-  teamSize: number
+  teamSize: number,
+  totalToolCount: number
 ): RuleResult => {
   const rules = [
+    ruleSingleToolNoSpend(entry, totalToolCount),
     ruleZeroSeatSpend(entry),
     ruleSeatsExceedTeam(entry, teamSize),
     ruleEnterpriseTinyTeam(entry, teamSize),
     ruleTeamPlanSolo(entry),
     ruleHighSpendPerSeat(entry),
+    ruleLowUtilizationHighSpend(entry, teamSize, totalToolCount),
   ];
 
   const triggered = rules.find((r) => r.triggered);
@@ -95,6 +102,9 @@ const runCrossToolRules = (
   const llmResult = ruleLlmPremiumDuplicate(tools);
   if (llmResult.triggered) results.push(llmResult);
 
+  const geminiResult = ruleLlmGeminiDuplicate(tools);
+  if (geminiResult.triggered) results.push(geminiResult);
+
   const apiResults = ruleApiVsSeatSameVendor(tools);
   results.push(...apiResults.filter((r) => r.triggered));
 
@@ -105,6 +115,7 @@ const runCrossToolRules = (
 
 const selectGovernanceInsights = (
   toolCount: number,
+  tools: ToolSelection[],
   crossToolResults: CrossToolRuleResult[],
   hasApiTools: boolean
 ): string[] => {
@@ -121,6 +132,17 @@ const selectGovernanceInsights = (
   }
   if (toolCount >= 4 && insights.length < 3) {
     insights.push(GOVERNANCE_INSIGHT_TEMPLATES[2]); // seat allocation policies
+  }
+  // Flag renewal review when any tool has custom/enterprise pricing (monthlyPricePerSeat === 0
+  // with a non-API plan indicates a negotiated contract without published pricing)
+  if (insights.length < 3) {
+    const hasCustomPricedEnterprisePlan = tools.some((t) => {
+      const detail = getPlanDetail(t.tool, t.plan);
+      return detail !== null && detail.monthlyPricePerSeat === 0 && t.monthlySpend > 0;
+    });
+    if (hasCustomPricedEnterprisePlan) {
+      insights.push(GOVERNANCE_INSIGHT_TEMPLATES[4]); // vendor contract renewal dates
+    }
   }
 
   return insights.slice(0, 3);
@@ -153,13 +175,51 @@ const selectOptimizationOpportunities = (
   return opportunities.slice(0, 4);
 };
 
+// ─── Savings Cause Phrase ──────────────────────────────────────────────────────
+
+/**
+ * Derives a specific, contextual cause phrase for the executive summary
+ * based on which rules actually triggered — rather than using a generic catch-all.
+ */
+const deriveSavingsCausePhrase = (
+  perToolResults: RuleResult[],
+  crossToolResults: CrossToolRuleResult[]
+): string => {
+  const triggeredCrossIds = crossToolResults.filter((r) => r.triggered).map((r) => r.ruleId);
+  const triggeredPerIds = perToolResults.filter((r) => r.triggered).map((r) => r.ruleId);
+
+  if (triggeredCrossIds.includes("COPILOT_OVERLAP")) {
+    return "driven by tool overlap consolidation opportunities";
+  }
+  if (triggeredPerIds.includes("SEATS_EXCEED_TEAM")) {
+    return "driven by seat right-sizing opportunities";
+  }
+  if (
+    triggeredPerIds.includes("ENTERPRISE_TINY_TEAM") ||
+    triggeredPerIds.includes("TEAM_PLAN_SOLO")
+  ) {
+    return "driven by plan-tier optimization";
+  }
+  if (
+    triggeredCrossIds.includes("LLM_PREMIUM_DUPLICATE") ||
+    triggeredCrossIds.includes("LLM_GEMINI_DUPLICATE")
+  ) {
+    return "driven by overlapping LLM subscription consolidation";
+  }
+  if (triggeredPerIds.includes("HIGH_SPEND_PER_SEAT")) {
+    return "driven by billing anomalies and contract reconciliation";
+  }
+  return "driven by plan-tier alignment and seat utilization analysis";
+};
+
 // ─── Executive Summary Builder ────────────────────────────────────────────────
 
 const buildAuditSummary = (
   estimatedSavings: number,
   potentialSavingsPercent: number,
   recommendationCount: number,
-  totalMonthlySpend: number
+  totalMonthlySpend: number,
+  causePhrase: string
 ): { headline: string; narrative: string } => {
   const isOptimized = estimatedSavings < EXECUTIVE_SAVINGS_FLOOR;
 
@@ -186,7 +246,7 @@ const buildAuditSummary = (
 
   return {
     headline: `${recommendationCount} optimization ${recommendationCount === 1 ? "opportunity" : "opportunities"} identified`,
-    narrative: `The audit identified potential savings of ${savingsText} based on plan-tier alignment, seat utilization, and tool overlap analysis. Estimates are conservative and derived from published vendor pricing. Actual savings will depend on implementation timing and vendor negotiation.`,
+    narrative: `The audit identified potential savings of ${savingsText} ${causePhrase}. Estimates are conservative and derived from published vendor pricing. Actual savings will depend on implementation timing and vendor negotiation.`,
   };
 };
 
@@ -212,7 +272,7 @@ export const generateAudit = (
 
   // ── Per-Tool Analysis ───────────────────────────────────────────────────────
   const perToolResults: RuleResult[] = tools.map((entry) =>
-    runPerToolRules(entry, teamSize)
+    runPerToolRules(entry, teamSize, tools.length)
   );
 
   // ── Cross-Tool Analysis ────────────────────────────────────────────────────
@@ -262,16 +322,20 @@ export const generateAudit = (
   );
 
   // ── Optimization Score ────────────────────────────────────────────────────
-  const triggeredRuleCount =
-    perToolResults.filter((r) => r.triggered).length +
-    crossToolResults.filter((r) => r.triggered).length;
+  const perToolTriggeredCount = perToolResults.filter((r) => r.triggered).length;
+  const crossToolTriggeredCount = crossToolResults.filter((r) => r.triggered).length;
 
-  const optimizationScore = computeOptimizationScore(
-    tools.length,
-    highTierCount,
-    seatUtilizationPercent,
-    triggeredRuleCount
-  );
+  // Zero-spend + zero-seats edge case: no data → no penalty, report base score
+  const optimizationScore =
+    totalMonthlySpend === 0 && totalSeats === 0
+      ? OPTIMIZATION_SCORE_CONFIG.baseScore
+      : computeOptimizationScore(
+          tools.length,
+          highTierCount,
+          seatUtilizationPercent,
+          perToolTriggeredCount,
+          crossToolTriggeredCount
+        );
 
   // ── Recommendations ────────────────────────────────────────────────────────
   const recommendations = buildRecommendations(
@@ -305,6 +369,7 @@ export const generateAudit = (
 
   const governanceInsights = selectGovernanceInsights(
     tools.length,
+    tools,
     crossToolResults,
     hasApiTools
   );
@@ -316,11 +381,13 @@ export const generateAudit = (
   );
 
   // ── Executive Summary ──────────────────────────────────────────────────────
+  const causePhrase = deriveSavingsCausePhrase(perToolResults, crossToolResults);
   const auditSummary = buildAuditSummary(
     estimatedSavings,
     potentialSavingsPercent,
     recommendations.filter((r) => r.estimatedSavingsImpact > 0).length,
-    totalMonthlySpend
+    totalMonthlySpend,
+    causePhrase
   );
 
   return {

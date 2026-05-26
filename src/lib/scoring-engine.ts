@@ -32,6 +32,10 @@ export const computeRiskScore = (
   toolCount: number,
   totalMonthlySpend: number
 ) => {
+  // No spend data → no risk signal. Avoid penalizing teams that haven't
+  // entered spend yet — a zero-spend audit is incomplete input, not a risk indicator.
+  if (totalMonthlySpend === 0) return 0;
+
   let score = 0;
   const [lowSpend, midSpend, highSpend] = RISK_SCORE_LIMITS.spend;
   const [toolMid, toolHigh] = RISK_SCORE_LIMITS.toolCounts;
@@ -56,13 +60,15 @@ export const computeOptimizationScore = (
   toolCount: number,
   highTierCount: number,
   seatUtilizationPercent: number,
-  triggeredRuleCount: number = 0
+  triggeredRuleCount: number = 0,
+  crossToolTriggeredCount: number = 0
 ) => {
   const complexityPenalty =
     toolCount * OPTIMIZATION_SCORE_CONFIG.toolPenalty +
     highTierCount * 3 +
     (seatUtilizationPercent < 60 ? OPTIMIZATION_SCORE_CONFIG.sizePenalty : 0) +
-    triggeredRuleCount * 2; // Each triggered rule adds a small penalty
+    triggeredRuleCount * 2 + // Each triggered per-tool rule adds a small penalty
+    crossToolTriggeredCount * OPTIMIZATION_SCORE_CONFIG.overlapPenalty; // Overlap rules are heavier
 
   return clamp(
     OPTIMIZATION_SCORE_CONFIG.baseScore - complexityPenalty,
@@ -104,6 +110,7 @@ export const computeConfidenceFromSignals = (
 
   const MEDIUM_CONFIDENCE_RULES = [
     "LLM_PREMIUM_DUPLICATE",
+    "LLM_GEMINI_DUPLICATE",
     "HIGH_SPEND_PER_SEAT",
   ];
 
@@ -141,7 +148,9 @@ export const computeConfidence = (
 // ─── Seat & Spend Metrics ────────────────────────────────────────────────────
 
 export const computeSeatUtilization = (teamSize: number, totalSeats: number) => {
+  // Guard: zero or negative team size → no utilization signal
   if (teamSize <= 0) return 0;
+  // totalSeats === 0 with a real team size legitimately returns 0 (no seats provisioned)
   return clamp(Math.round((totalSeats / teamSize) * 100), 0, 100);
 };
 

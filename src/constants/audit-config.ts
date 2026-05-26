@@ -24,9 +24,14 @@ export const RISK_SCORE_LIMITS = {
 } as const;
 
 export const OPTIMIZATION_SCORE_CONFIG = {
-  baseScore: 92,
+  /** A perfectly lean, right-sized stack scores 90 — not 100, because there is always monitoring overhead */
+  baseScore: 90,
   minScore: 48,
-  toolPenalty: 4,
-  sizePenalty: 8,
+  /** Per-tool penalty: each additional tool adds governance and overlap risk */
+  toolPenalty: 3,
+  /** Seat utilization penalty: low utilization (< 60%) is a material governance signal */
+  sizePenalty: 10,
+  /** Overlap penalty: applied once per triggered cross-tool overlap rule (copilot, LLM duplicate) */
+  overlapPenalty: 6,
 } as const;
 

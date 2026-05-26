@@ -77,8 +77,10 @@ export interface RuleResult {
  */
 export const ruleZeroSeatSpend = (entry: ToolSelection): RuleResult => {
   const triggered = entry.seatCount === 0 && entry.monthlySpend > 0;
+  // Conservative: flag 15% of spend as recoverable (could be orphaned licenses,
+  // duplicate billing, or unrevoked subscriptions — not all spend is guaranteed recoverable)
   const savings = triggered
-    ? Math.min(Math.round(entry.monthlySpend * 0.15), Math.round(entry.monthlySpend))
+    ? Math.round(entry.monthlySpend * 0.15)
     : 0;
   return {
     ruleId: "ZERO_SEAT_SPEND",
@@ -108,13 +110,18 @@ export const ruleSeatsExceedTeam = (
     ? excessSeats * pricePerSeat
     : Math.round(entry.monthlySpend * 0.1);
   const savings = triggered && rawSavings >= SAVINGS_FLOOR_MONTHLY ? rawSavings : 0;
+
+  const savingsNote = savings > 0
+    ? ` Reducing to ${teamSize} seats would save approximately $${savings}/month based on published plan pricing.`
+    : "";
+
   return {
     ruleId: "SEATS_EXCEED_TEAM",
     triggered: triggered && savings > 0,
     savings,
     confidence: "High",
     action: `Reduce to ${teamSize} seats`,
-    rationale: `Licensed seat count (${entry.seatCount}) exceeds the reported team size (${teamSize}). ${excessSeats} seat${excessSeats > 1 ? "s" : ""} appear unassigned. Aligning licenses to active headcount eliminates provable overspend.`,
+    rationale: `Licensed seat count (${entry.seatCount}) exceeds the reported team size (${teamSize}). ${excessSeats} seat${excessSeats > 1 ? "s" : ""} appear unassigned.${savingsNote} Aligning licenses to active headcount eliminates provable overspend.`,
   };
 };
 
@@ -130,7 +137,15 @@ export const ruleEnterpriseTinyTeam = (
   const plan = entry.plan;
   const isEnterprisePlan =
     plan === "Enterprise" || plan === "Business" || plan === "Teams";
-  const smallSeatThreshold = Math.max(3, Math.round(teamSize * 0.1));
+  // Cap the threshold at 10 for very large orgs: a 10-seat Enterprise deployment
+  // for a 500-person org is still a legitimate "tiny team" signal.
+  // Without the cap, the threshold rounds to 50 for a 500-person org —
+  // which means up to 50 seats escape flagging, even though 50 Enterprise seats
+  // for 500 people is not obviously wasteful.
+  const smallSeatThreshold = Math.min(
+    Math.max(3, Math.round(teamSize * 0.1)),
+    10
+  );
   const isTinyTeam =
     entry.seatCount > 0 && entry.seatCount <= smallSeatThreshold;
   const triggered = isEnterprisePlan && isTinyTeam && !API_TOOLS.includes(entry.tool);
@@ -217,7 +232,9 @@ export const ruleHighSpendPerSeat = (entry: ToolSelection): RuleResult => {
   const effectivePerSeat = entry.monthlySpend / entry.seatCount;
   const publishedPrice = planDetail.monthlyPricePerSeat;
   const overspendRatio = effectivePerSeat / publishedPrice;
-  // Flag if effective spend is > 40% above published price
+  // 40% threshold: accounts for annual-to-monthly proration differences, legacy
+  // contract uplifts, and rounding. Anything above 1.4x is a material anomaly
+  // that warrants a billing reconciliation — not just normal variance.
   const triggered = overspendRatio > 1.4;
   const rawSavings = triggered
     ? Math.round((effectivePerSeat - publishedPrice) * entry.seatCount)
@@ -231,6 +248,92 @@ export const ruleHighSpendPerSeat = (entry: ToolSelection): RuleResult => {
     confidence: "Medium",
     action: "Audit billing vs published pricing",
     rationale: `Effective per-seat cost ($${effectivePerSeat.toFixed(0)}/seat) is materially above the published ${entry.plan} plan rate ($${publishedPrice}/seat). The gap may reflect add-ons, usage overages, or a legacy contract rate. A billing reconciliation against current vendor pricing is recommended.`,
+  };
+};
+
+/**
+ * RULE: LOW_UTILIZATION_HIGH_SPEND
+ * Multiple tools active with low seat utilization relative to team size —
+ * suggests a fragmented stack where consolidation may reduce overhead.
+ *
+ * Triggered when:
+ *   - This is evaluated at a per-tool level, but the signal is that the tool's
+ *     seat count is less than 50% of the team size (suggesting many tools are
+ *     being used by small subsets of the team)
+ *   - Tool is not an API tool (API spend doesn't follow seat patterns)
+ *   - The tool has meaningful spend (> $0)
+ *
+ * Confidence: Low — this is a fragmentation signal, not a proven waste finding.
+ * Savings: Conservative estimate at 10% of tool spend.
+ */
+export const ruleLowUtilizationHighSpend = (
+  entry: ToolSelection,
+  teamSize: number,
+  totalToolCount: number
+): RuleResult => {
+  // Only fire on seat-based tools with real spend
+  if (API_TOOLS.includes(entry.tool) || entry.monthlySpend === 0 || entry.seatCount === 0) {
+    return {
+      ruleId: "LOW_UTILIZATION_HIGH_SPEND",
+      triggered: false,
+      savings: 0,
+      confidence: "Low",
+      action: "No action",
+      rationale: "",
+    };
+  }
+
+  // Requires at least 3 tools in the audit to be a meaningful fragmentation signal
+  if (totalToolCount < 3) {
+    return {
+      ruleId: "LOW_UTILIZATION_HIGH_SPEND",
+      triggered: false,
+      savings: 0,
+      confidence: "Low",
+      action: "No action",
+      rationale: "",
+    };
+  }
+
+  // Flag if this tool's seats cover less than 50% of the team
+  const utilizationRatio = entry.seatCount / Math.max(teamSize, 1);
+  const isLowUtilization = utilizationRatio < 0.5;
+  const triggered = isLowUtilization;
+
+  // Conservative: 10% of spend — this is a signal, not a certain saving
+  const rawSavings = Math.round(entry.monthlySpend * 0.1);
+  const savings = triggered && rawSavings >= SAVINGS_FLOOR_MONTHLY ? rawSavings : 0;
+
+  return {
+    ruleId: "LOW_UTILIZATION_HIGH_SPEND",
+    triggered: triggered && savings > 0,
+    savings,
+    confidence: "Low",
+    action: "Review active seat utilization",
+    rationale: `${entry.tool} is licensed for ${entry.seatCount} seat${entry.seatCount !== 1 ? "s" : ""} against a team of ${teamSize}. With ${Math.round(utilizationRatio * 100)}% team coverage and ${totalToolCount} tools active, this tool may serve a narrow use case. Validating active usage and consolidating niche tools into primary platforms is a low-risk optimization step.`,
+  };
+};
+
+/**
+ * RULE: SINGLE_TOOL_NO_SPEND
+ * Edge-case guard: exactly one tool entered with no spend and no seats.
+ * This is an incomplete audit input, not a real optimization signal.
+ * Returns a clear, honest message rather than a generic "cost-efficient" result.
+ */
+export const ruleSingleToolNoSpend = (
+  entry: ToolSelection,
+  totalToolCount: number
+): RuleResult => {
+  const triggered =
+    totalToolCount === 1 && entry.monthlySpend === 0 && entry.seatCount === 0;
+
+  return {
+    ruleId: "SINGLE_TOOL_NO_SPEND",
+    triggered,
+    savings: 0,
+    confidence: "Low",
+    action: "Add spend and seat data",
+    rationale: `No spend or seat data has been entered for ${entry.tool}. Add your monthly spend and seat count to enable savings analysis and plan-tier recommendations.`,
   };
 };
 
@@ -272,7 +375,7 @@ export const ruleCopilotOverlap = (
     savings,
     confidence: "High",
     affectedTools: copilots.map((t) => t.tool),
-    title: "Overlapping coding copilot subscriptions",
+    title: "Overlapping coding copilot subscriptions — high confidence overlap",
     description: `${names} appear to be active concurrently for the same engineering team. These tools overlap significantly in core functionality — AI code completion, in-editor chat, and multi-file editing. Consolidating to a single copilot platform eliminates redundant seat costs and reduces context-switching overhead.`,
   };
 };
@@ -312,9 +415,59 @@ export const ruleLlmPremiumDuplicate = (
       ...(claudeEntry ? ["Claude" as ToolName] : []),
       ...(chatgptEntry ? ["ChatGPT" as ToolName] : []),
     ],
-    title: "Dual premium LLM subscriptions may duplicate workflows",
+    title: "Dual premium LLM subscriptions — likely redundant workflows",
     description:
       "Claude and ChatGPT premium subscriptions serve substantially overlapping use cases — research, writing, analysis, and summarization. Without distinct, validated use cases for each model, teams often default to one and underutilize the other. Consolidating to a primary LLM and using API access for secondary workflows typically yields better economics.",
+  };
+};
+
+/**
+ * RULE: LLM_GEMINI_DUPLICATE
+ * Gemini Advanced is active alongside Claude (Pro/Max/Team) or ChatGPT (Plus/Team) —
+ * three premium conversational LLM subscriptions for the same team is likely over-provisioned.
+ */
+export const ruleLlmGeminiDuplicate = (
+  tools: ToolSelection[]
+): CrossToolRuleResult => {
+  const premiumClaudePlans = ["Pro", "Max", "Team", "Enterprise"];
+  const premiumChatGptPlans = ["Plus", "Team", "Enterprise"];
+
+  const geminiEntry = tools.find(
+    (t) => t.tool === "Gemini" && t.plan === "Advanced" && t.monthlySpend > 0
+  );
+  const claudeEntry = tools.find(
+    (t) => t.tool === "Claude" && premiumClaudePlans.includes(t.plan) && t.monthlySpend > 0
+  );
+  const chatgptEntry = tools.find(
+    (t) => t.tool === "ChatGPT" && premiumChatGptPlans.includes(t.plan) && t.monthlySpend > 0
+  );
+
+  // Only trigger if Gemini Advanced is active alongside at least one other premium LLM
+  const triggered = !!geminiEntry && (!!claudeEntry || !!chatgptEntry);
+
+  const affectedTools: ToolName[] = [
+    ...(geminiEntry ? ["Gemini" as ToolName] : []),
+    ...(claudeEntry ? ["Claude" as ToolName] : []),
+    ...(chatgptEntry ? ["ChatGPT" as ToolName] : []),
+  ];
+
+  // Conservative: 30% of Gemini Advanced spend (it is the least commonly primary LLM in this pairing)
+  const rawSavings = triggered ? Math.round(geminiEntry!.monthlySpend * 0.3) : 0;
+  const savings = rawSavings >= SAVINGS_FLOOR_MONTHLY ? rawSavings : 0;
+
+  const otherTools = [claudeEntry, chatgptEntry]
+    .filter(Boolean)
+    .map((t) => t!.tool)
+    .join(" and ");
+
+  return {
+    ruleId: "LLM_GEMINI_DUPLICATE",
+    triggered,
+    savings,
+    confidence: "Medium",
+    affectedTools,
+    title: "Gemini Advanced alongside other premium LLMs — potential optimization opportunity",
+    description: `Gemini Advanced is active concurrently with ${otherTools} premium subscription${otherTools.includes("and") ? "s" : ""}. Unless Gemini is used specifically for Google Workspace integration or multimodal tasks not covered by ${otherTools}, this may represent an underutilized subscription. Evaluating primary vs. supplementary LLM roles across the team can clarify whether consolidation is appropriate.`,
   };
 };
 
@@ -346,7 +499,7 @@ export const ruleApiVsSeatSameVendor = (
       savings: 0, // Cannot compute without token volumes — honest stance
       confidence: "Medium",
       affectedTools: [seat, api],
-      title: `${seat} seat plan and API access may overlap`,
+      title: `${seat} seat plan and API access may overlap — potential optimization opportunity`,
       description: `Both a ${seat} seat-based subscription and direct ${api} access are active. For automation-heavy or high-volume workflows, API access often provides better economics than per-seat subscriptions. For interactive, conversational use, seat plans are typically more cost-effective. Reviewing which workloads drive each spend line can clarify whether consolidation is appropriate.`,
     });
   }
