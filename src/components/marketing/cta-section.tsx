@@ -17,13 +17,11 @@ export function CtaSection() {
           viewport={viewportOnce}
           className="relative overflow-hidden rounded-3xl border border-white/8 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-10 text-slate-100 shadow-2xl shadow-black/30 md:p-14"
         >
-          {/* Ambient glows */}
           <div className="pointer-events-none absolute -right-32 -top-32 h-64 w-64 rounded-full bg-indigo-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 left-16 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl" />
           <div className="pointer-events-none absolute inset-0 dot-grid opacity-20" />
 
           <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-            {/* Text */}
             <div className="max-w-xl space-y-4">
               <motion.div variants={staggerChild}>
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-slate-300">
@@ -45,7 +43,6 @@ export function CtaSection() {
                 and governance so you can scale AI with confidence.
               </motion.p>
 
-              {/* Trust indicators */}
               <motion.div
                 variants={fadeUp}
                 className="flex flex-wrap gap-4 pt-2"
@@ -59,7 +56,6 @@ export function CtaSection() {
               </motion.div>
             </div>
 
-            {/* CTAs */}
             <motion.div
               variants={staggerChild}
               className="flex flex-col gap-3 sm:flex-row"

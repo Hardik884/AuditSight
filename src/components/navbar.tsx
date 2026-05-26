@@ -33,7 +33,6 @@ export function Navbar() {
         }`}
       >
         <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-3.5">
-          {/* Logo */}
           <Link
             href="/"
             className="group flex items-center gap-2.5 text-sm font-semibold tracking-tight text-foreground"
@@ -46,7 +45,6 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
           <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
               <Link
@@ -61,7 +59,6 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* CTA + Mobile toggle */}
           <div className="flex items-center gap-3">
             <Button
               asChild
@@ -85,7 +82,6 @@ export function Navbar() {
         </nav>
       </header>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div

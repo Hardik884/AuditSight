@@ -62,7 +62,6 @@ export function HowItWorksSection() {
     <section id="how-it-works" className="border-t border-border/40 py-20 md:py-28">
       <div className="mx-auto w-full max-w-7xl px-6">
 
-        {/* Section header */}
         <motion.div
           className="max-w-2xl space-y-4"
           variants={staggerContainer}
@@ -90,7 +89,6 @@ export function HowItWorksSection() {
           </motion.p>
         </motion.div>
 
-        {/* Steps grid */}
         <motion.div
           className="relative mt-12 grid gap-6 md:grid-cols-3"
           variants={staggerContainer}
@@ -98,7 +96,6 @@ export function HowItWorksSection() {
           whileInView="visible"
           viewport={viewportOnce}
         >
-          {/* Connector line (desktop) */}
           <div className="absolute inset-x-12 top-8 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block" />
 
           {steps.map((step, i) => (
@@ -108,7 +105,6 @@ export function HowItWorksSection() {
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
               className="relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border/60 bg-background p-6 shadow-sm"
             >
-              {/* Step number */}
               <div className="flex items-center justify-between">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${step.accent} ring-1 ${step.ring}`}>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
@@ -118,7 +114,6 @@ export function HowItWorksSection() {
                 <span className={`h-2 w-2 rounded-full ${step.dot}`} />
               </div>
 
-              {/* Content */}
               <div>
                 <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
                   {step.title}
@@ -128,7 +123,6 @@ export function HowItWorksSection() {
                 </p>
               </div>
 
-              {/* Arrow (non-last) */}
               {i < steps.length - 1 && (
                 <ArrowRight className="absolute right-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-300 dark:text-slate-600 md:block" />
               )}
@@ -142,7 +136,6 @@ export function HowItWorksSection() {
           ))}
         </motion.div>
 
-        {/* Spend preview */}
         <motion.div
           className="mt-14 rounded-2xl border border-border/60 bg-slate-50/70 p-6 dark:bg-slate-900/40"
           variants={fadeUp}

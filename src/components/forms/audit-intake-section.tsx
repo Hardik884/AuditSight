@@ -292,7 +292,6 @@ export function AuditIntakeSection() {
   return (
     <section id="generate-audit" className="border-t border-border/40 py-16 md:py-20">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6">
-        {/* Section header */}
         <div className="max-w-2xl space-y-4">
           <span className="inline-flex items-center rounded-full border border-border/70 bg-background px-3.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
             Audit intake
@@ -306,7 +305,6 @@ export function AuditIntakeSection() {
           </p>
         </div>
 
-        {/* Step indicator */}
         <div className="flex items-center gap-3">
           {["Add your tools", "Configure spend & seats", "Generate audit"].map((step, i) => (
             <div key={step} className="flex items-center gap-2">

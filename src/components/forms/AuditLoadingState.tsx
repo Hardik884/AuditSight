@@ -28,7 +28,6 @@ export function AuditLoadingState({
 
   return (
     <div className="rounded-3xl border border-border/60 bg-background p-6 shadow-sm">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -50,7 +49,6 @@ export function AuditLoadingState({
         )}
       </div>
 
-      {/* Steps */}
       <div className="mt-6 space-y-2.5">
         {steps.map((step, index) => {
           const stepComplete =
@@ -100,7 +98,6 @@ export function AuditLoadingState({
         })}
       </div>
 
-      {/* Progress bar */}
       <div className="mt-5">
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span>Audit progress</span>
@@ -115,7 +112,6 @@ export function AuditLoadingState({
             animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           />
-          {/* Shimmer overlay (only while loading) */}
           {isLoading && progressPercent > 0 && (
             <div
               className="shimmer absolute inset-0"
@@ -125,7 +121,6 @@ export function AuditLoadingState({
         </div>
       </div>
 
-      {/* Error message */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
@@ -140,7 +135,6 @@ export function AuditLoadingState({
         )}
       </AnimatePresence>
 
-      {/* Success state */}
       <AnimatePresence>
         {isComplete && (
           <motion.div
@@ -167,7 +161,6 @@ export function AuditLoadingState({
         )}
       </AnimatePresence>
 
-      {/* Idle placeholder */}
       {isIdle && (
         <div className="mt-5 space-y-2.5">
           {["Savings analysis", "Governance check", "ROI calculation"].map((item) => (

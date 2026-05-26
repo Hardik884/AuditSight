@@ -76,11 +76,9 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-linear-to-br from-slate-900 via-slate-950 to-slate-900 p-7 text-white shadow-2xl shadow-black/30">
-      {/* Ambient glows */}
       <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-indigo-500/12 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-emerald-500/8 blur-3xl" />
 
-      {/* Premium badge */}
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/8 ring-1 ring-white/10">
           <Lock className="h-4 w-4 text-slate-300" />
@@ -90,7 +88,6 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
         </span>
       </div>
 
-      {/* Copy */}
       <div className="mt-5">
         <h3 className="text-xl font-bold tracking-tight text-white">
           Unlock your complete audit report
@@ -100,7 +97,6 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
         </p>
       </div>
 
-      {/* Feature list */}
       <ul className="mt-5 space-y-2">
         {UNLOCK_FEATURES.map((feature) => (
           <li key={feature} className="flex items-center gap-2.5 text-sm text-slate-300">
@@ -110,10 +106,8 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
         ))}
       </ul>
 
-      {/* Divider */}
       <div className="my-6 h-px bg-white/8" />
 
-      {/* Form */}
       <AnimatePresence mode="wait">
         {status !== "success" ? (
           <motion.form
@@ -138,7 +132,6 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
                 onChange={(e) => setHomepage(e.target.value)}
               />
             </div>
-            {/* Email input */}
             <div className="group relative rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition focus-within:border-indigo-400/50 focus-within:bg-white/8 focus-within:ring-2 focus-within:ring-indigo-400/20">
               <div className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 shrink-0 text-slate-500 group-focus-within:text-indigo-400" />
@@ -159,7 +152,6 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
               </div>
             </div>
 
-            {/* Optional details */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition focus-within:border-indigo-400/50 focus-within:bg-white/8 focus-within:ring-2 focus-within:ring-indigo-400/20">
                 <label className="block text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
@@ -207,7 +199,6 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
               />
             </div>
 
-            {/* Error */}
             <AnimatePresence>
               {errorMessage && (
                 <motion.p
@@ -221,7 +212,6 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
               )}
             </AnimatePresence>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={status === "loading"}
@@ -240,7 +230,6 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
               )}
             </button>
 
-            {/* Trust line */}
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-600">
               <Lock className="h-3 w-3" />
               No account required. We only use this to deliver your audit.

@@ -28,8 +28,6 @@ interface AuditResultDetailsProps {
   aiExecutiveSummary?: string;
 }
 
-// ── Badge helpers ─────────────────────────────────────────────────────────────
-
 const CONFIDENCE_STYLES: Record<ConfidenceLevel, string> = {
   High: "bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400",
   Medium: "bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20 dark:text-amber-400",
@@ -59,8 +57,6 @@ const SeverityBadge = ({ level }: { level: SeverityLevel }) => (
     {level} impact
   </span>
 );
-
-// ── Animated count-up metric ──────────────────────────────────────────────────
 
 function CountUpValue({
   value,
@@ -93,8 +89,6 @@ function CountUpValue({
   return <span ref={ref}>{display}</span>;
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-
 export function AuditResultDetails({
   status,
   auditResponse,
@@ -111,30 +105,25 @@ export function AuditResultDetails({
   const isStackOptimized =
     hasResults && (auditResponse?.metrics.estimatedSavings ?? 0) < 100;
 
-  // Surface the AI summary: prefer the prop, then fall back to the auditResponse field
   const resolvedAiSummary = aiExecutiveSummary ?? auditResponse?.aiExecutiveSummary;
 
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── AI Executive Summary ───────────────────────────────────────── */}
       {hasResults && (
         <AiExecutiveSummaryCard summary={resolvedAiSummary} />
       )}
 
-      {/* ── Executive Summary ──────────────────────────────────────────── */}
       <motion.div
         variants={fadeUp}
         initial="hidden"
         animate={hasResults ? "visible" : "hidden"}
         className="rounded-3xl border border-border/60 bg-background p-6 shadow-sm"
       >
-        {/* Label */}
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
           Executive summary
         </p>
 
-        {/* Headline */}
         <div className="mt-3">
           {auditResponse ? (
             <div
@@ -163,7 +152,6 @@ export function AuditResultDetails({
           )}
         </div>
 
-        {/* KPI grid */}
         <div className="mt-5 grid gap-3 sm:grid-cols-4">
           {[
             {
@@ -228,7 +216,6 @@ export function AuditResultDetails({
           ))}
         </div>
 
-        {/* Consultation CTA */}
         {showConsultationCta && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -269,7 +256,6 @@ export function AuditResultDetails({
         )}
       </motion.div>
 
-      {/* ── Full Report ─────────────────────────────────────────────────── */}
       <AnimatePresence>
         {showDetails && (
           <motion.div
@@ -279,7 +265,6 @@ export function AuditResultDetails({
             transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="rounded-3xl border border-border/60 bg-background p-6 shadow-sm"
           >
-            {/* ── Tool breakdown ──────────────────────────────────────────── */}
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 Tool breakdown
@@ -307,7 +292,6 @@ export function AuditResultDetails({
                         : "border-border/60"
                     }`}
                   >
-                    {/* Header */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -329,7 +313,6 @@ export function AuditResultDetails({
                       </span>
                     </div>
 
-                    {/* Spend / savings */}
                     <div className="mt-3.5 space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">Current spend</span>
@@ -347,7 +330,6 @@ export function AuditResultDetails({
                       )}
                     </div>
 
-                    {/* Rationale box */}
                     <div className="mt-3.5 rounded-xl border border-border/60 bg-slate-50/80 px-3.5 py-3 dark:bg-slate-950/50">
                       <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
                         {tool.recommendedAction}
@@ -367,7 +349,6 @@ export function AuditResultDetails({
               })}
             </motion.div>
 
-            {/* ── Recommendations ─────────────────────────────────────────── */}
             <div className="mt-8 flex items-center justify-between">
               <p className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
                 Recommended priorities
@@ -421,7 +402,6 @@ export function AuditResultDetails({
               ))}
             </motion.div>
 
-            {/* ── Governance + Usage insights ──────────────────────────────── */}
             {auditResponse && (
               <motion.div
                 className="mt-7 grid gap-4 sm:grid-cols-2"
@@ -429,7 +409,6 @@ export function AuditResultDetails({
                 initial="hidden"
                 animate="visible"
               >
-                {/* Governance */}
                 <motion.div
                   variants={staggerChild}
                   className="rounded-2xl border border-border/60 bg-slate-50/60 p-4 dark:bg-slate-900/30"
@@ -450,7 +429,6 @@ export function AuditResultDetails({
                   </ul>
                 </motion.div>
 
-                {/* Usage */}
                 <motion.div
                   variants={staggerChild}
                   className="rounded-2xl border border-border/60 bg-slate-50/60 p-4 dark:bg-slate-900/30"
@@ -489,7 +467,6 @@ export function AuditResultDetails({
                   </div>
                 </motion.div>
 
-                {/* Optimization opportunities */}
                 <motion.div
                   variants={staggerChild}
                   className="rounded-2xl border border-border/60 bg-slate-50/60 p-4 dark:bg-slate-900/30 sm:col-span-2"

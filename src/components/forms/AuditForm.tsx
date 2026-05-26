@@ -86,7 +86,6 @@ export function AuditForm({
           />
         </div>
 
-        {/* ── Team size ──────────────────────────────────────────────────── */}
         <div>
           <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">
             <Users className="h-3.5 w-3.5" />
@@ -107,7 +106,6 @@ export function AuditForm({
           </div>
         </div>
 
-        {/* ── Tool entries ───────────────────────────────────────────────── */}
         <div>
           <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">
             <Layers className="h-3.5 w-3.5" />
@@ -125,7 +123,6 @@ export function AuditForm({
                   exit="exit"
                   className="overflow-hidden rounded-2xl border border-border/70 bg-slate-50/60 dark:bg-slate-900/40"
                 >
-                  {/* Tool header */}
                   <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -145,9 +142,7 @@ export function AuditForm({
                     </button>
                   </div>
 
-                  {/* Config row */}
                   <div className="grid gap-3 p-4 sm:grid-cols-3">
-                    {/* Plan */}
                     <div className="space-y-1.5">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
                         Plan
@@ -171,7 +166,6 @@ export function AuditForm({
                       </Select>
                     </div>
 
-                    {/* Monthly spend */}
                     <div className="space-y-1.5">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
                         Monthly spend
@@ -198,7 +192,6 @@ export function AuditForm({
                       </div>
                     </div>
 
-                    {/* Seats */}
                     <div className="space-y-1.5">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
                         Seats
@@ -229,7 +222,6 @@ export function AuditForm({
               ))}
             </AnimatePresence>
 
-            {/* Add tool */}
             <div className="rounded-2xl border border-dashed border-border/70 bg-transparent p-4 transition hover:border-indigo-400/50 hover:bg-indigo-50/30 dark:hover:bg-indigo-500/5">
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4 shrink-0 text-slate-400" />
@@ -259,7 +251,6 @@ export function AuditForm({
           </div>
         </div>
 
-        {/* ── Primary use case ───────────────────────────────────────────── */}
         <div>
           <label className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">
             Primary use case
@@ -283,7 +274,6 @@ export function AuditForm({
           </div>
         </div>
 
-        {/* ── Error ─────────────────────────────────────────────────────── */}
         <AnimatePresence>
           {errorMessage && (
             <motion.div
@@ -297,7 +287,6 @@ export function AuditForm({
           )}
         </AnimatePresence>
 
-        {/* ── Submit ─────────────────────────────────────────────────────── */}
         <Button
           size="lg"
           className="group w-full gap-2 bg-slate-900 text-white shadow-md shadow-black/10 transition-all hover:bg-slate-700 hover:shadow-lg active:scale-[0.98] disabled:opacity-50 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"

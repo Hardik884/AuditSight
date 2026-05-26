@@ -68,7 +68,6 @@ export function AuditInsightsSection() {
     >
       <div className="mx-auto w-full max-w-7xl px-6">
 
-        {/* Header */}
         <motion.div
           className="max-w-3xl space-y-4"
           variants={staggerContainer}
@@ -96,10 +95,8 @@ export function AuditInsightsSection() {
           </motion.p>
         </motion.div>
 
-        {/* Main grid */}
         <div className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
 
-          {/* Left: spend overview */}
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -107,7 +104,6 @@ export function AuditInsightsSection() {
             viewport={viewportOnce}
             className="grid gap-5"
           >
-            {/* KPI card */}
             <div className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -145,7 +141,6 @@ export function AuditInsightsSection() {
               </div>
             </div>
 
-            {/* Spend categories */}
             <div className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -167,7 +162,6 @@ export function AuditInsightsSection() {
             </div>
           </motion.div>
 
-          {/* Right: recommendations + analytics */}
           <motion.div
             variants={staggerContainer}
             initial="hidden"
@@ -175,7 +169,6 @@ export function AuditInsightsSection() {
             viewport={viewportOnce}
             className="flex flex-col gap-5"
           >
-            {/* Recommendations */}
             <div className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -214,7 +207,6 @@ export function AuditInsightsSection() {
               </div>
             </div>
 
-            {/* Usage analytics */}
             <motion.div
               variants={staggerChild}
               className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm"

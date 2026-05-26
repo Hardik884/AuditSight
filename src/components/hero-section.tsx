@@ -58,7 +58,6 @@ function AnimatedBar({ value, delay = 0 }: { value: number; delay?: number }) {
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden">
-      {/* ── Backgrounds ── */}
       <div className="absolute inset-0 -z-10 dot-grid opacity-40" />
       <div className="absolute -top-40 left-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-indigo-500/8 blur-3xl" />
       <div className="absolute -bottom-20 -right-20 -z-10 h-[400px] w-[400px] rounded-full bg-violet-500/6 blur-3xl" />
@@ -67,14 +66,12 @@ export function HeroSection() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-6 pb-16 pt-12 md:pt-16 lg:pt-20">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
 
-          {/* ── Left: Copy ── */}
           <motion.div
             className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
           >
-            {/* Badge */}
             <motion.div variants={scaleIn}>
               <span className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/8 px-4 py-2 text-xs font-semibold text-indigo-600 ring-1 ring-indigo-500/10 dark:text-indigo-400">
                 <Sparkles className="h-3 w-3" />
@@ -82,7 +79,6 @@ export function HeroSection() {
               </span>
             </motion.div>
 
-            {/* Headline */}
             <motion.div variants={fadeUp} className="max-w-xl space-y-4">
               <h1 className="text-balance text-[2.75rem] font-bold leading-[1.08] tracking-[-0.04em] text-slate-900 dark:text-slate-50 sm:text-5xl md:text-[3.5rem]">
                 See where your{" "}
@@ -95,7 +91,6 @@ export function HeroSection() {
               </p>
             </motion.div>
 
-            {/* CTAs */}
             <motion.div
               variants={fadeUp}
               className="flex flex-col items-center gap-3 sm:flex-row lg:items-start"
@@ -120,7 +115,6 @@ export function HeroSection() {
               </Button>
             </motion.div>
 
-            {/* Quick stats */}
             <motion.div
               variants={fadeUp}
               className="flex flex-wrap items-center justify-center gap-5 border-t border-border/50 pt-5 lg:justify-start"
@@ -142,7 +136,6 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* ── Right: Dashboard mock ── */}
           <motion.div
             variants={slideInRight}
             initial="hidden"
@@ -150,13 +143,10 @@ export function HeroSection() {
             className="w-full"
           >
             <div className="relative w-full rounded-3xl border border-border/50 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-6 shadow-2xl shadow-black/25 ring-1 ring-white/5">
-              {/* Ambient glow */}
               <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-indigo-500/15 blur-3xl" />
               <div className="absolute -bottom-8 left-8 h-32 w-32 rounded-full bg-violet-500/10 blur-3xl" />
 
-              {/* Inner dashboard */}
               <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-slate-950/80 backdrop-blur-sm">
-                {/* Header bar */}
                 <div className="flex items-center gap-2 border-b border-white/5 px-5 py-3">
                   <div className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
                   <div className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
@@ -165,7 +155,6 @@ export function HeroSection() {
                 </div>
 
                 <div className="p-5">
-                  {/* Top KPIs */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-xl border border-white/5 bg-white/3 p-4">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
@@ -191,7 +180,6 @@ export function HeroSection() {
                     </div>
                   </div>
 
-                  {/* Budget bar */}
                   <div className="mt-4 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">Budget utilization</span>
@@ -200,7 +188,6 @@ export function HeroSection() {
                     <AnimatedBar value={82} />
                   </div>
 
-                  {/* Insight cards */}
                   <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
                     {insightCards.map((card, i) => {
                       const Icon = card.icon;
@@ -231,7 +218,6 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        {/* ── Trust strip ── */}
         <motion.div
           variants={fadeUp}
           initial="hidden"

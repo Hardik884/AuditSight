@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { AuditResult } from "@/types/audit";
 import { AuditResultDetails } from "@/components/forms/AuditResultDetails";
 import { ReportUnlockCard } from "@/components/forms/ReportUnlockCard";
@@ -12,7 +12,11 @@ interface AuditReportPanelProps {
 type UnlockState = "locked" | "unlocked";
 
 export function AuditReportPanel({ audit }: AuditReportPanelProps) {
-  const [unlockState, setUnlockState] = useState<UnlockState>("locked");
+  const [unlockState, setUnlockState] = useState<UnlockState>(() => {
+    if (typeof window === "undefined") return "locked";
+    const stored = sessionStorage.getItem(`audit-unlock:${audit.auditId}`);
+    return stored === "unlocked" ? "unlocked" : "locked";
+  });
 
   const formatCurrency = useMemo(
     () =>
@@ -26,15 +30,6 @@ export function AuditReportPanel({ audit }: AuditReportPanelProps) {
   );
 
   const isUnlocked = unlockState === "unlocked";
-
-  useEffect(() => {
-    const storageKey = `audit-unlock:${audit.auditId}`;
-    const stored = sessionStorage.getItem(storageKey);
-    if (stored === "unlocked") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUnlockState("unlocked");
-    }
-  }, [audit.auditId]);
 
   const handleUnlock = () => {
     const storageKey = `audit-unlock:${audit.auditId}`;

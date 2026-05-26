@@ -78,7 +78,6 @@ export function FeatureSection() {
     <section id="features" className="border-t border-border/40 py-20 md:py-28">
       <div className="mx-auto w-full max-w-7xl px-6">
 
-        {/* Section header */}
         <motion.div
           className="max-w-2xl space-y-4"
           variants={staggerContainer}
@@ -107,7 +106,6 @@ export function FeatureSection() {
           </motion.p>
         </motion.div>
 
-        {/* Feature grid */}
         <motion.div
           className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3"
           variants={staggerContainer}
@@ -124,10 +122,8 @@ export function FeatureSection() {
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border/60 bg-background p-6 shadow-sm transition-shadow duration-300 hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/20"
               >
-                {/* Subtle gradient overlay on hover */}
                 <div className="absolute inset-0 -z-10 bg-gradient-to-br from-transparent via-transparent to-slate-50/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:to-slate-900/30" />
 
-                {/* Icon + tag row */}
                 <div className="flex items-start justify-between">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${feature.bg} ring-1 ${feature.ring}`}>
                     <Icon className={`h-5 w-5 ${feature.accent}`} />
@@ -137,7 +133,6 @@ export function FeatureSection() {
                   </span>
                 </div>
 
-                {/* Text */}
                 <div>
                   <h3 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
                     {feature.title}
@@ -147,7 +142,6 @@ export function FeatureSection() {
                   </p>
                 </div>
 
-                {/* Bottom accent */}
                 <div className={`mt-auto h-0.5 w-12 rounded-full ${feature.bg} transition-all duration-300 group-hover:w-20`} />
               </motion.div>
             );
