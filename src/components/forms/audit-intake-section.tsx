@@ -29,6 +29,18 @@ const progressSteps = [
 type Status = "idle" | "loading" | "complete";
 const STORAGE_KEY = "audit-intake-v2";
 
+const buildToolInputValues = (entries: ToolSelection[]) =>
+  entries.reduce<Record<string, { monthlySpend: string; seatCount: string }>>(
+    (acc, entry) => {
+      acc[entry.tool] = {
+        monthlySpend: entry.monthlySpend > 0 ? String(entry.monthlySpend) : "",
+        seatCount: entry.seatCount > 0 ? String(entry.seatCount) : "",
+      };
+      return acc;
+    },
+    {}
+  );
+
 const createDefaultTool = (tool = TOOL_NAMES[0]): ToolSelection => {
   const plan = getPlanOptions(tool)[0] as ToolPlan;
   const isApiPlan = plan.toLowerCase().includes("api");
@@ -42,12 +54,16 @@ const createDefaultTool = (tool = TOOL_NAMES[0]): ToolSelection => {
 
 export function AuditIntakeSection() {
   const [teamSize, setTeamSize] = useState<number>(25);
+  const [teamSizeInput, setTeamSizeInput] = useState<string>("25");
   const [primaryUseCase, setPrimaryUseCase] = useState<PrimaryUseCase>(
     PRIMARY_USE_CASES[0]
   );
   const [toolEntries, setToolEntries] = useState<ToolSelection[]>([
     createDefaultTool(),
   ]);
+  const [toolInputValues, setToolInputValues] = useState(
+    buildToolInputValues([createDefaultTool()])
+  );
   const [homepage, setHomepage] = useState<string>("");
   const [status, setStatus] = useState<Status>("idle");
   const [progressIndex, setProgressIndex] = useState<number>(0);
@@ -81,7 +97,10 @@ export function AuditIntakeSection() {
 
       const parsedTeamSize = parsed.teamSize;
       if (typeof parsedTeamSize === "number") {
-        setTimeout(() => setTeamSize(parsedTeamSize), 0);
+        setTimeout(() => {
+          setTeamSize(parsedTeamSize);
+          setTeamSizeInput(String(parsedTeamSize));
+        }, 0);
       }
       const parsedUseCase = parsed.primaryUseCase;
       if (parsedUseCase && PRIMARY_USE_CASES.includes(parsedUseCase)) {
@@ -103,6 +122,7 @@ export function AuditIntakeSection() {
 
         if (sanitized.length > 0) {
           setTimeout(() => setToolEntries(sanitized), 0);
+          setTimeout(() => setToolInputValues(buildToolInputValues(sanitized)), 0);
         }
       }
     } catch (error) {
@@ -159,11 +179,24 @@ export function AuditIntakeSection() {
 
   const addTool = (tool: ToolSelection["tool"]) => {
     if (toolEntries.some((entry) => entry.tool === tool)) return;
-    setToolEntries((current) => [...current, createDefaultTool(tool)]);
+    const newEntry = createDefaultTool(tool);
+    setToolEntries((current) => [...current, newEntry]);
+    setToolInputValues((current) => ({
+      ...current,
+      [tool]: {
+        monthlySpend: newEntry.monthlySpend > 0 ? String(newEntry.monthlySpend) : "",
+        seatCount: newEntry.seatCount > 0 ? String(newEntry.seatCount) : "",
+      },
+    }));
   };
 
   const removeTool = (tool: ToolSelection["tool"]) => {
     setToolEntries((current) => current.filter((entry) => entry.tool !== tool));
+    setToolInputValues((current) => {
+      const next = { ...current };
+      delete next[tool];
+      return next;
+    });
   };
 
   const updateTool = (
@@ -177,6 +210,19 @@ export function AuditIntakeSection() {
     );
   };
 
+  const updateToolInput = (
+    tool: ToolSelection["tool"],
+    patch: Partial<{ monthlySpend: string; seatCount: string }>
+  ) => {
+    setToolInputValues((current) => ({
+      ...current,
+      [tool]: {
+        monthlySpend: patch.monthlySpend ?? current[tool]?.monthlySpend ?? "",
+        seatCount: patch.seatCount ?? current[tool]?.seatCount ?? "",
+      },
+    }));
+  };
+
   const resetFlow = () => {
     setStatus("idle");
     setProgressIndex(0);
@@ -184,6 +230,16 @@ export function AuditIntakeSection() {
     setAuditId(null);
     setFormError(null);
     setSubmitError(null);
+  };
+
+  const handleTeamSizeInputChange = (value: string) => {
+    setTeamSizeInput(value);
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      setTeamSize(parsed);
+    } else if (value.trim() === "") {
+      setTeamSize(0);
+    }
   };
 
   const handleGenerate = async () => {
@@ -272,17 +328,19 @@ export function AuditIntakeSection() {
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <AuditForm
             primaryUseCases={PRIMARY_USE_CASES}
-            teamSize={teamSize}
+            teamSizeInput={teamSizeInput}
             toolEntries={toolEntries}
+            toolInputValues={toolInputValues}
             availableTools={availableTools}
             selectedPrimaryUseCase={primaryUseCase}
             isSubmitting={status === "loading"}
             errorMessage={formError}
-            onTeamSizeChange={setTeamSize}
+            onTeamSizeInputChange={handleTeamSizeInputChange}
             onSelectPrimaryUseCase={setPrimaryUseCase}
             onAddTool={addTool}
             onRemoveTool={removeTool}
             onUpdateTool={updateTool}
+            onUpdateToolInput={updateToolInput}
             honeypotValue={homepage}
             onHoneypotChange={setHomepage}
             onSubmit={handleGenerate}

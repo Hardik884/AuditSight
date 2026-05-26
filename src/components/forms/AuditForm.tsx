@@ -19,17 +19,19 @@ import { listItem } from "@/lib/motion";
 
 interface AuditFormProps {
   primaryUseCases: readonly PrimaryUseCase[];
-  teamSize: number;
+  teamSizeInput: string;
   toolEntries: ToolSelection[];
+  toolInputValues: Record<string, { monthlySpend: string; seatCount: string }>;
   availableTools: ToolName[];
   selectedPrimaryUseCase: PrimaryUseCase;
   isSubmitting: boolean;
   errorMessage: string | null;
-  onTeamSizeChange: (size: number) => void;
+  onTeamSizeInputChange: (value: string) => void;
   onSelectPrimaryUseCase: (useCase: PrimaryUseCase) => void;
   onAddTool: (tool: ToolName) => void;
   onRemoveTool: (tool: ToolName) => void;
   onUpdateTool: (tool: ToolName, patch: Partial<ToolSelection>) => void;
+  onUpdateToolInput: (tool: ToolName, patch: Partial<{ monthlySpend: string; seatCount: string }>) => void;
   honeypotValue: string;
   onHoneypotChange: (value: string) => void;
   onSubmit: () => void;
@@ -45,17 +47,19 @@ const USE_CASE_ICONS: Record<PrimaryUseCase, string> = {
 
 export function AuditForm({
   primaryUseCases,
-  teamSize,
+  teamSizeInput,
   toolEntries,
+  toolInputValues,
   availableTools,
   selectedPrimaryUseCase,
   isSubmitting,
   errorMessage,
-  onTeamSizeChange,
+  onTeamSizeInputChange,
   onSelectPrimaryUseCase,
   onAddTool,
   onRemoveTool,
   onUpdateTool,
+  onUpdateToolInput,
   honeypotValue,
   onHoneypotChange,
   onSubmit,
@@ -92,8 +96,8 @@ export function AuditForm({
             <Input
               type="number"
               min={1}
-              value={teamSize}
-              onChange={(e) => onTeamSizeChange(Number(e.target.value) || 0)}
+              value={teamSizeInput}
+              onChange={(e) => onTeamSizeInputChange(e.target.value)}
               className="h-12 rounded-2xl border-border/70 bg-background pl-4 text-base shadow-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20"
               placeholder="25"
             />
@@ -112,7 +116,7 @@ export function AuditForm({
 
           <div className="mt-3 grid gap-3">
             <AnimatePresence initial={false}>
-              {toolEntries.map((entry) => (
+                {toolEntries.map((entry) => (
                 <motion.div
                   key={entry.tool}
                   variants={listItem}
@@ -177,12 +181,17 @@ export function AuditForm({
                         <Input
                           type="number"
                           min={0}
-                          value={entry.monthlySpend}
-                          onChange={(e) =>
+                          value={toolInputValues[entry.tool]?.monthlySpend ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            onUpdateToolInput(entry.tool, {
+                              monthlySpend: value,
+                            });
+                            const parsed = Number(value);
                             onUpdateTool(entry.tool, {
-                              monthlySpend: Number(e.target.value) || 0,
-                            })
-                          }
+                              monthlySpend: Number.isFinite(parsed) ? parsed : 0,
+                            });
+                          }}
                           className="h-10 border-border/60 bg-background pl-8 text-sm"
                           placeholder="200"
                         />
@@ -199,12 +208,17 @@ export function AuditForm({
                         <Input
                           type="number"
                           min={0}
-                          value={entry.seatCount}
-                          onChange={(e) =>
+                          value={toolInputValues[entry.tool]?.seatCount ?? ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            onUpdateToolInput(entry.tool, {
+                              seatCount: value,
+                            });
+                            const parsed = Number(value);
                             onUpdateTool(entry.tool, {
-                              seatCount: Number(e.target.value) || 0,
-                            })
-                          }
+                              seatCount: Number.isFinite(parsed) ? parsed : 0,
+                            });
+                          }}
                           className="h-10 border-border/60 bg-background pl-8 text-sm"
                           placeholder="5"
                         />
