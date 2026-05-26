@@ -2,34 +2,51 @@
 
 ## System Diagram
 
-diagram/mermaid-diagram.png
-
 ```mermaid
-flowchart TB
-  %% AuditSight (Next.js App Router) — high-level production architecture
+flowchart TD
 
-  U[User / Buyer] -->|Browser| WEB[Next.js App Router UI]
-  WEB -->|POST /api/audit| API_AUDIT[Route Handler: /app/api/audit/route.ts]
-  WEB -->|POST /api/email-capture| API_EMAIL[Route Handler: /app/api/email-capture/route.ts]
+    A[User Opens AuditSight] --> B[Next.js Frontend]
 
-  API_AUDIT -->|Zod validate + normalize| VALID[Validation Layer<br/>(Zod schema)]
-  VALID -->|deterministic scoring| ENGINE[Audit Engine<br/>(scoring + rules + recommendation)]
-  ENGINE -->|pricing lookups| PRICING[Pricing Intelligence<br/>(config + vendor plan mapping)]
+    B --> C[AI Spend Intake Form]
+    C --> D[Client Validation]
 
-  ENGINE -->|structured findings| SUMMARY[Gemini Summary<br/>(executive narrative)]
-  SUMMARY -.->|fallback: templated summary| FALLBACK[Summary Fallback<br/>(no LLM / error)]
+    D --> E[API Audit Route]
 
-  ENGINE -->|persist report + inputs| DB[(Supabase Postgres)]
-  API_EMAIL -->|store lead + unlock state| DB
+    E --> F[Zod Validation]
 
-  DB -->|read via /audit/[id]| REPORT[Shareable Report Route<br/>/app/audit/[id]/page.tsx]
-  REPORT --> OG[Open Graph Image<br/>/app/audit/[id]/opengraph-image.tsx]
+    F --> G[Deterministic Audit Engine]
 
-  API_EMAIL -->|send transactional email| RESEND[Resend API]
-  RESEND -->|delivered to inbox| U
+    G --> H[Pricing Intelligence Layer]
+    G --> I[Recommendation Engine]
+    G --> J[Scoring Engine]
 
-  WEB -->|abuse protection| ABUSE[Honeypot / bot checks]
-  ABUSE --> API_AUDIT
+    H --> K[Vendor Pricing Registry]
+
+    G --> L[Gemini Executive Summary Service]
+
+    L --> M{Gemini Success}
+
+    M -->|Yes| N[AI Summary Generated]
+    M -->|No| O[Fallback Summary]
+
+    N --> P[Assemble Final Audit Report]
+    O --> P
+
+    P --> Q[Persist Audit in Supabase]
+
+    Q --> R[Generate Public Audit ID]
+
+    R --> S[Transactional Email via Resend]
+
+    R --> T[Dynamic Audit Report Route]
+
+    T --> U[Open Graph Metadata Generation]
+
+    U --> V[Shareable Audit Report]
+
+    V --> W[Email Unlock Gate]
+
+    W --> X[Executive Dashboard and Recommendations]
 ```
 
 ## Data Flow
