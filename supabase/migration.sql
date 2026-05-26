@@ -230,6 +230,12 @@ $$;
 -- The original schema had captured_from as nullable text.
 -- The refactor types it as EmailCaptureSource = 'report-unlock' (non-null).
 
+-- Add optional enrichment fields for lead capture.
+alter table public.email_captures
+  add column if not exists company_name text null,
+  add column if not exists role text null,
+  add column if not exists team_size integer null;
+
 update public.email_captures
   set captured_from = 'report-unlock'
   where captured_from is null;

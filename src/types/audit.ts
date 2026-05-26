@@ -24,6 +24,7 @@ export interface AuditRequest {
   primaryUseCase: PrimaryUseCase;
   teamSize: number;
   tools: ToolSelection[];
+  homepage?: string;
 }
 
 export interface ToolBreakdown {
@@ -122,12 +123,19 @@ export interface EmailCaptureRequest {
   auditId: string;
   email: string;
   capturedFrom: EmailCaptureSource;
+  companyName?: string;
+  role?: string;
+  teamSize?: number;
+  homepage?: string;
 }
 
 export interface EmailCaptureRow {
   audit_id: string;
   email: string;
   captured_from: EmailCaptureSource;
+  company_name?: string | null;
+  role?: string | null;
+  team_size?: number | null;
 }
 
 export interface ApiSuccess<T> {

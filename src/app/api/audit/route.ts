@@ -3,11 +3,21 @@ import { generateAudit } from "@/lib/audit-engine";
 import { saveAudit } from "@/lib/audit-storage";
 import { auditRequestSchema } from "@/lib/validation/audit-schema";
 import { generateAiExecutiveSummary } from "@/lib/ai-summary";
+import { isHoneypotTripped, logHoneypotTrip } from "@/lib/security/honeypot";
 import type { ApiResponse, AuditRequest, AuditResult } from "@/types/audit";
 
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
+    if (isHoneypotTripped(payload?.homepage)) {
+      logHoneypotTrip("/api/audit");
+      const response: ApiResponse<AuditResult> = {
+        ok: false,
+        error: { message: "Invalid audit request." },
+      };
+      return NextResponse.json(response, { status: 400 });
+    }
+
     const parsed = auditRequestSchema.safeParse(payload);
 
     if (!parsed.success) {

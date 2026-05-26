@@ -106,6 +106,9 @@ export const saveEmailCapture = async (payload: EmailCaptureRequest) => {
     audit_id: payload.auditId,
     email: payload.email,
     captured_from: payload.capturedFrom,
+    company_name: payload.companyName ?? null,
+    role: payload.role ?? null,
+    team_size: payload.teamSize ?? null,
   };
 
   const { error } = await supabase.from(EMAIL_CAPTURE_TABLE).insert(insertPayload);

@@ -48,6 +48,7 @@ export function AuditIntakeSection() {
   const [toolEntries, setToolEntries] = useState<ToolSelection[]>([
     createDefaultTool(),
   ]);
+  const [homepage, setHomepage] = useState<string>("");
   const [status, setStatus] = useState<Status>("idle");
   const [progressIndex, setProgressIndex] = useState<number>(0);
   const [progressDone, setProgressDone] = useState<boolean>(false);
@@ -78,13 +79,13 @@ export function AuditIntakeSection() {
         tools: ToolSelection[];
       }>;
 
-      if (typeof parsed.teamSize === "number") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setTeamSize(parsed.teamSize);
+      const parsedTeamSize = parsed.teamSize;
+      if (typeof parsedTeamSize === "number") {
+        setTimeout(() => setTeamSize(parsedTeamSize), 0);
       }
-      if (parsed.primaryUseCase && PRIMARY_USE_CASES.includes(parsed.primaryUseCase)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setPrimaryUseCase(parsed.primaryUseCase);
+      const parsedUseCase = parsed.primaryUseCase;
+      if (parsedUseCase && PRIMARY_USE_CASES.includes(parsedUseCase)) {
+        setTimeout(() => setPrimaryUseCase(parsedUseCase), 0);
       }
       if (Array.isArray(parsed.tools) && parsed.tools.length > 0) {
         const sanitized = parsed.tools
@@ -101,8 +102,7 @@ export function AuditIntakeSection() {
           });
 
         if (sanitized.length > 0) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setToolEntries(sanitized);
+          setTimeout(() => setToolEntries(sanitized), 0);
         }
       }
     } catch (error) {
@@ -125,10 +125,10 @@ export function AuditIntakeSection() {
   useEffect(() => {
     if (status !== "loading") return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setProgressIndex(0);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setProgressDone(false);
+    setTimeout(() => {
+      setProgressIndex(0);
+      setProgressDone(false);
+    }, 0);
     const stepDuration = 1200;
     const interval = setInterval(() => {
       setProgressIndex((current) =>
@@ -149,8 +149,7 @@ export function AuditIntakeSection() {
   useEffect(() => {
     if (status !== "loading") return;
     if (!progressDone || !auditId) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setStatus("complete");
+    setTimeout(() => setStatus("complete"), 0);
   }, [auditId, progressDone, status]);
 
   useEffect(() => {
@@ -218,6 +217,7 @@ export function AuditIntakeSection() {
       primaryUseCase,
       teamSize,
       tools: toolEntries,
+      homepage,
     };
 
     const result = await requestAudit(payload);
@@ -283,6 +283,8 @@ export function AuditIntakeSection() {
             onAddTool={addTool}
             onRemoveTool={removeTool}
             onUpdateTool={updateTool}
+            honeypotValue={homepage}
+            onHoneypotChange={setHomepage}
             onSubmit={handleGenerate}
           />
 

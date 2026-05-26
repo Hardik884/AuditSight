@@ -211,6 +211,15 @@ create table if not exists public.email_captures (
   -- Captured email address. Not validated for uniqueness (one audit
   -- may unlock from multiple devices/browsers).
 
+  company_name text null,
+  -- Optional company name for lead enrichment.
+
+  role text null,
+  -- Optional role/title for lead enrichment.
+
+  team_size integer null,
+  -- Optional headcount for lead enrichment.
+
   captured_from text not null default 'report-unlock'
   -- Source identifier. Type: EmailCaptureSource = 'report-unlock'.
   -- Allows future sources (e.g., 'consultation-cta') without schema change.

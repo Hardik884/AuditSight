@@ -23,6 +23,10 @@ const UNLOCK_FEATURES = [
 
 export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
   const [email, setEmail] = useState<string>("");
+  const [companyName, setCompanyName] = useState<string>("");
+  const [role, setRole] = useState<string>("");
+  const [teamSize, setTeamSize] = useState<string>("");
+  const [homepage, setHomepage] = useState<string>("");
   const [status, setStatus] = useState<CaptureStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -32,6 +36,9 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
     event.preventDefault();
     if (status === "loading") return;
 
+    const formData = new FormData(event.currentTarget);
+    const honeypotValue = String(formData.get("homepage") ?? "").trim();
+
     if (!isValidEmail) {
       setErrorMessage("Enter a valid work email to unlock the report.");
       return;
@@ -40,10 +47,19 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
     setErrorMessage(null);
     setStatus("loading");
 
+    const trimmedCompany = companyName.trim();
+    const trimmedRole = role.trim();
+    const parsedTeamSize = Number.parseInt(teamSize.trim(), 10);
+    const validTeamSize = Number.isFinite(parsedTeamSize) ? parsedTeamSize : undefined;
+
     const result = await saveEmailCapture({
       auditId,
       email,
       capturedFrom: captureSource,
+      ...(trimmedCompany ? { companyName: trimmedCompany } : {}),
+      ...(trimmedRole ? { role: trimmedRole } : {}),
+      ...(validTeamSize ? { teamSize: validTeamSize } : {}),
+      homepage: honeypotValue || homepage,
     });
 
     if (!result.ok) {
@@ -59,7 +75,7 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 p-7 text-white shadow-2xl shadow-black/30">
+    <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-linear-to-br from-slate-900 via-slate-950 to-slate-900 p-7 text-white shadow-2xl shadow-black/30">
       {/* Ambient glows */}
       <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-indigo-500/12 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-emerald-500/8 blur-3xl" />
@@ -108,6 +124,20 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
             className="flex flex-col gap-4"
             onSubmit={handleSubmit}
           >
+            <div className="sr-only" aria-hidden="true">
+              <label className="sr-only" htmlFor="unlock-homepage">
+                Homepage
+              </label>
+              <input
+                id="unlock-homepage"
+                type="text"
+                name="homepage"
+                tabIndex={-1}
+                autoComplete="off"
+                value={homepage}
+                onChange={(e) => setHomepage(e.target.value)}
+              />
+            </div>
             {/* Email input */}
             <div className="group relative rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition focus-within:border-indigo-400/50 focus-within:bg-white/8 focus-within:ring-2 focus-within:ring-indigo-400/20">
               <div className="flex items-center gap-2.5">
@@ -122,12 +152,59 @@ export function ReportUnlockCard({ auditId, onUnlock }: ReportUnlockCardProps) {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@company.com"
                     className="mt-1 w-full bg-transparent text-sm text-white placeholder:text-slate-600 focus:outline-none"
-                    aria-invalid={Boolean(errorMessage)}
                     disabled={status !== "idle"}
                     autoComplete="email"
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Optional details */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition focus-within:border-indigo-400/50 focus-within:bg-white/8 focus-within:ring-2 focus-within:ring-indigo-400/20">
+                <label className="block text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Company (optional)
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Company name"
+                  className="mt-1 w-full bg-transparent text-sm text-white placeholder:text-slate-600 focus:outline-none"
+                  disabled={status !== "idle"}
+                  autoComplete="organization"
+                />
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition focus-within:border-indigo-400/50 focus-within:bg-white/8 focus-within:ring-2 focus-within:ring-indigo-400/20">
+                <label className="block text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  Role (optional)
+                </label>
+                <input
+                  type="text"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  placeholder="Title or function"
+                  className="mt-1 w-full bg-transparent text-sm text-white placeholder:text-slate-600 focus:outline-none"
+                  disabled={status !== "idle"}
+                  autoComplete="organization-title"
+                />
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition focus-within:border-indigo-400/50 focus-within:bg-white/8 focus-within:ring-2 focus-within:ring-indigo-400/20">
+              <label className="block text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                Team size (optional)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={5000}
+                value={teamSize}
+                onChange={(e) => setTeamSize(e.target.value)}
+                placeholder="Total headcount"
+                className="mt-1 w-full bg-transparent text-sm text-white placeholder:text-slate-600 focus:outline-none"
+                disabled={status !== "idle"}
+                inputMode="numeric"
+              />
             </div>
 
             {/* Error */}

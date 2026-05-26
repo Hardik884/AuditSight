@@ -30,6 +30,8 @@ interface AuditFormProps {
   onAddTool: (tool: ToolName) => void;
   onRemoveTool: (tool: ToolName) => void;
   onUpdateTool: (tool: ToolName, patch: Partial<ToolSelection>) => void;
+  honeypotValue: string;
+  onHoneypotChange: (value: string) => void;
   onSubmit: () => void;
 }
 
@@ -54,6 +56,8 @@ export function AuditForm({
   onAddTool,
   onRemoveTool,
   onUpdateTool,
+  honeypotValue,
+  onHoneypotChange,
   onSubmit,
 }: AuditFormProps) {
   const [pendingTool, setPendingTool] = useState<string>("");
@@ -63,6 +67,20 @@ export function AuditForm({
   return (
     <div className="rounded-3xl border border-border/60 bg-background p-6 shadow-sm">
       <div className="grid gap-7">
+        <div className="sr-only" aria-hidden="true">
+          <label className="sr-only" htmlFor="audit-homepage">
+            Homepage
+          </label>
+          <input
+            id="audit-homepage"
+            type="text"
+            name="homepage"
+            tabIndex={-1}
+            autoComplete="off"
+            defaultValue={honeypotValue}
+            onChange={(e) => onHoneypotChange(e.target.value)}
+          />
+        </div>
 
         {/* ── Team size ──────────────────────────────────────────────────── */}
         <div>
