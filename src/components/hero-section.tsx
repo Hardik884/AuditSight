@@ -8,8 +8,6 @@ import { ArrowRight, Sparkles, TrendingDown, Shield, Zap } from "lucide-react";
 import {
   fadeUp,
   staggerContainer,
-  staggerChild,
-  slideInLeft,
   slideInRight,
   scaleIn,
   viewportOnce,

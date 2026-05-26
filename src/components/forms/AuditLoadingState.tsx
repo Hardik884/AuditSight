@@ -56,7 +56,6 @@ export function AuditLoadingState({
           const stepComplete =
             isComplete || (isLoading && index < progressIndex);
           const stepActive = isLoading && index === progressIndex;
-          const stepPending = !stepActive && !stepComplete;
 
           return (
             <motion.div

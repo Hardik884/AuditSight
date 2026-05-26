@@ -47,7 +47,7 @@ export const sendAuditEmail = async (
   const showConsultationCta = estimatedSavings > HIGH_SAVINGS_THRESHOLD;
   const lowSavings = estimatedSavings <= LOW_SAVINGS_THRESHOLD;
 
-  const { subject, html, text, previewText } = buildAuditEmailTemplate({
+  const { subject, html, text } = buildAuditEmailTemplate({
     recipientEmail: input.recipientEmail,
     reportUrl,
     executiveSummary,

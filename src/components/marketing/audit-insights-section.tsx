@@ -154,13 +154,13 @@ export function AuditInsightsSection() {
                 <span className="text-xs text-slate-400">Last 30 days</span>
               </div>
               <div className="mt-5 space-y-4">
-                {spendCategories.map((cat, i) => (
+                {spendCategories.map((cat, index) => (
                   <div key={cat.label}>
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-500 dark:text-slate-400">{cat.label}</span>
                       <span className="font-semibold text-slate-700 dark:text-slate-200">{cat.value}</span>
                     </div>
-                    <AnimatedBar percent={cat.percent} color={cat.color} delay={0.4 + i * 0.1} />
+                    <AnimatedBar percent={cat.percent} color={cat.color} delay={0.4 + index * 0.1} />
                   </div>
                 ))}
               </div>
@@ -186,7 +186,7 @@ export function AuditInsightsSection() {
                 </span>
               </div>
               <div className="mt-4 space-y-3">
-                {recommendations.map((item, i) => {
+                {recommendations.map((item) => {
                   const Icon = item.icon;
                   return (
                     <motion.div

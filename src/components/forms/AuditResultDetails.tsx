@@ -16,7 +16,7 @@ import {
   ExternalLink,
   ChevronRight,
 } from "lucide-react";
-import { staggerContainer, staggerChild, fadeUp, viewportOnce } from "@/lib/motion";
+import { staggerContainer, staggerChild, fadeUp } from "@/lib/motion";
 import { AiExecutiveSummaryCard } from "@/components/forms/AiExecutiveSummaryCard";
 
 interface AuditResultDetailsProps {

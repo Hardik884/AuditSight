@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { CheckCircle, ArrowRight } from "lucide-react";
-import { staggerContainer, staggerChild, fadeUp, progressBar, viewportOnce } from "@/lib/motion";
+import { staggerContainer, staggerChild, fadeUp, viewportOnce } from "@/lib/motion";
 
 const steps = [
   {
